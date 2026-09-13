@@ -1,0 +1,26 @@
+node_modules/
+.next/
+out/
+build/
+.env
+.env.local
+.DS_Store
+
+# Antigravity / Gemini internal files
+.gemini/antigravity/bin/
+.gemini/antigravity/builtin/
+.gemini/antigravity/knowledge/
+.gemini/antigravity/agyhub_summaries_proto.pb
+.gemini/antigravity/antigravity_state.pbtxt
+.gemini/antigravity/installation_id
+.gemini/antigravity/annotations/
+.gemini/tmp/
+.gemini/oauth_creds.json
+.gemini/google_accounts.json
+
+# Local database (runtime data)
+**/data/database.json
+
+# Build artifacts
+tsconfig.tsbuildinfo
+*.tsbuildinfo
