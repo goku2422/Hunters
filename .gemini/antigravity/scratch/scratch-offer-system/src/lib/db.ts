@@ -12,6 +12,8 @@ import {
   IdentificationMethod,
   ResolveShopRequest,
   ResolveShopResponse,
+  QrScan,
+  ShopAnalytics,
 } from '../types';
 import {
   INITIAL_ADMINS,
@@ -30,7 +32,9 @@ interface DatabaseData {
   customers: Customer[];
   offers: Offer[];
   claims: Claim[];
+  qrScans: QrScan[];
 }
+
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'database.json');
@@ -95,6 +99,7 @@ class DatabaseStore {
       ],
       offers: INITIAL_OFFERS,
       claims: INITIAL_CLAIMS,
+      qrScans: [],
     };
     this.loadFromDisk();
   }
@@ -115,6 +120,7 @@ class DatabaseStore {
           customers: parsed.customers ?? this.data.customers,
           offers: parsed.offers?.length ? parsed.offers : this.data.offers,
           claims: parsed.claims ?? this.data.claims,
+          qrScans: parsed.qrScans ?? [],
         };
       } else {
         this.saveToDisk();
@@ -124,6 +130,7 @@ class DatabaseStore {
       console.error('Error loading database:', err);
     }
   }
+
 
   private saveToDisk() {
     try {
@@ -210,6 +217,17 @@ class DatabaseStore {
 
   public getMerchantByEmail(email: string): Merchant | undefined {
     return this.data.merchants.find((m) => m.email.toLowerCase() === email.toLowerCase());
+  }
+
+  public getMerchantByGoogleId(googleId: string): Merchant | undefined {
+    return this.data.merchants.find((m) => m.googleId === googleId);
+  }
+
+  public getMerchantByGoogleEmail(googleEmail: string): Merchant | undefined {
+    return this.data.merchants.find(
+      (m) => m.googleEmail?.toLowerCase() === googleEmail.toLowerCase() ||
+             m.email.toLowerCase() === googleEmail.toLowerCase()
+    );
   }
 
   public getMerchantByShopId(shopId: string): Merchant | undefined {
@@ -580,7 +598,58 @@ class DatabaseStore {
       totalShops: this.data.shops.length,
       totalMerchants: this.data.merchants.length,
       totalCustomers: this.data.customers.length,
+      totalQrScans: this.data.qrScans.length,
     };
+  }
+
+  // --- QR SCANS ---
+  public logQrScan(shopId: string, userAgent?: string): QrScan {
+    const shop = this.getShopById(shopId);
+    const scan: QrScan = {
+      id: `scan-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
+      shopId,
+      shopName: shop?.name || 'Unknown Shop',
+      scannedAt: new Date().toISOString(),
+      userAgent,
+    };
+    this.data.qrScans.push(scan);
+    this.saveToDisk();
+    return scan;
+  }
+
+  public getQrScans(shopId?: string): QrScan[] {
+    if (shopId) {
+      return this.data.qrScans.filter((s) => s.shopId === shopId);
+    }
+    return [...this.data.qrScans];
+  }
+
+  // --- SHOP ANALYTICS (per-merchant detailed stats) ---
+  public getShopAnalytics(baseUrl = 'http://localhost:3000'): ShopAnalytics[] {
+    const today = new Date().toISOString().slice(0, 10);
+
+    return this.data.shops.map((shop) => {
+      const merchant = this.data.merchants.find((m) => m.shopId === shop.id);
+      const claims = this.data.claims.filter((c) => c.shopId === shop.id);
+      const scans = this.data.qrScans.filter((s) => s.shopId === shop.id);
+      const uniqueCustomerMobiles = new Set(claims.map((c) => c.customerMobile));
+
+      return {
+        shopId: shop.id,
+        shopName: shop.name,
+        merchantName: merchant?.name || 'Unassigned',
+        merchantEmail: merchant?.email || '-',
+        qrScanCount: scans.length,
+        uniqueCustomers: uniqueCustomerMobiles.size,
+        totalClaims: claims.length,
+        pendingClaims: claims.filter((c) => c.status === 'PENDING').length,
+        acceptedClaims: claims.filter((c) => c.status === 'ACCEPTED').length,
+        rejectedClaims: claims.filter((c) => c.status === 'REJECTED').length,
+        todayScans: scans.filter((s) => s.scannedAt.startsWith(today)).length,
+        todayClaims: claims.filter((c) => c.createdAt.startsWith(today)).length,
+        qrUrl: `${baseUrl}/shop/${shop.slug}`,
+      };
+    });
   }
 }
 
@@ -588,3 +657,4 @@ class DatabaseStore {
 const globalForDb = globalThis as unknown as { dbStore?: DatabaseStore };
 export const db = globalForDb.dbStore || new DatabaseStore();
 if (process.env.NODE_ENV !== 'production') globalForDb.dbStore = db;
+

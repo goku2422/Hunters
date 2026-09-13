@@ -21,8 +21,12 @@ import {
   Filter,
   RefreshCw,
   Sliders,
+  BarChart3,
+  Download,
+  ExternalLink,
+  Copy,
 } from 'lucide-react';
-import { Shop, Merchant, Claim, Customer, Offer } from '@/types';
+import { Shop, Merchant, Claim, Customer, Offer, ShopAnalytics } from '@/types';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -35,8 +39,16 @@ export default function AdminDashboardPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Analytics & QR Modal State
+  const [analyticsData, setAnalyticsData] = useState<ShopAnalytics[]>([]);
+  const [qrModalShop, setQrModalShop] = useState<any | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [isLoadingQr, setIsLoadingQr] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
   // Active Tab
-  const [currentTab, setCurrentTab] = useState<'SHOPS' | 'MERCHANTS' | 'CLAIMS' | 'CUSTOMERS' | 'OFFERS'>('SHOPS');
+  const [currentTab, setCurrentTab] = useState<'SHOPS' | 'MERCHANTS' | 'CLAIMS' | 'CUSTOMERS' | 'OFFERS' | 'ANALYTICS'>('SHOPS');
 
   // Filter state for claims
   const [selectedShopFilter, setSelectedShopFilter] = useState<string>('ALL');
@@ -66,7 +78,9 @@ export default function AdminDashboardPage() {
     email: '',
     password: 'shop123',
     phone: '',
+    gmailEmail: '', // Gmail for Google OAuth login
   });
+
 
   // Fetch all admin data
   const fetchAdminData = useCallback(async () => {
@@ -115,11 +129,50 @@ export default function AdminDashboardPage() {
     }
   }, [router, merchantForm.shopId]);
 
+  // Fetch shop analytics
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/qr', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setAnalyticsData(data.analytics);
+      }
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+    }
+  }, []);
+
+  // Show QR modal for a shop
+  const handleShowQr = async (shop: any) => {
+    setQrModalShop(shop);
+    setIsLoadingQr(true);
+    setQrDataUrl(null);
+    setQrUrl(null);
+    try {
+      const res = await fetch(`/api/admin/qr?shopId=${shop.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setQrDataUrl(data.qrDataUrl);
+        setQrUrl(data.qrUrl);
+      }
+    } catch (err) {
+      console.error('Error generating QR:', err);
+    } finally {
+      setIsLoadingQr(false);
+    }
+  };
+
   useEffect(() => {
     fetchAdminData();
     const interval = setInterval(fetchAdminData, 4000);
     return () => clearInterval(interval);
   }, [fetchAdminData]);
+
+  useEffect(() => {
+    if (currentTab === 'ANALYTICS') {
+      fetchAnalytics();
+    }
+  }, [currentTab, fetchAnalytics]);
 
   // Handle Create / Edit Shop
   const handleSaveShop = async (e: React.FormEvent) => {
@@ -185,6 +238,7 @@ export default function AdminDashboardPage() {
           email: '',
           password: 'shop123',
           phone: '',
+          gmailEmail: '',
         });
         await fetchAdminData();
       }
@@ -192,6 +246,7 @@ export default function AdminDashboardPage() {
       console.error('Error saving merchant:', err);
     }
   };
+
 
   // Handle Delete Merchant
   const handleDeleteMerchant = async (merchantId: string) => {
@@ -360,6 +415,18 @@ export default function AdminDashboardPage() {
             <Sliders className="w-4 h-4" />
             <span>Offers Engine</span>
           </button>
+
+          <button
+            onClick={() => setCurrentTab('ANALYTICS')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+              currentTab === 'ANALYTICS'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 font-semibold'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Analytics & QR Reports</span>
+          </button>
         </div>
 
         {/* TAB 1: SHOPS MANAGEMENT */}
@@ -443,7 +510,15 @@ export default function AdminDashboardPage() {
                         <span className="font-bold text-slate-900">{shop.totalClaims || 0}</span>
                         <span className="text-[11px] text-slate-400"> ({shop.acceptedClaims || 0} accepted)</span>
                       </td>
-                      <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                      <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
+                        <button
+                          onClick={() => handleShowQr(shop)}
+                          title="Generate & View QR Code"
+                          className="px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 rounded-lg inline-flex items-center gap-1 transition-all"
+                        >
+                          <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>QR Code</span>
+                        </button>
                         <button
                           onClick={() => {
                             setEditingShop(shop);
@@ -673,6 +748,134 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         )}
+
+        {/* TAB 5: ANALYTICS & QR REPORTS */}
+        {currentTab === 'ANALYTICS' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Merchant QR & Scan Analytics</h2>
+                <p className="text-xs text-slate-500">Track QR code scans, unique customers, and claim request status per shop.</p>
+              </div>
+              <button
+                onClick={fetchAnalytics}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Refresh Data</span>
+              </button>
+            </div>
+
+            {/* Global Summary Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-4 rounded-2xl shadow-sm">
+                <div className="text-[11px] font-semibold text-indigo-100 uppercase tracking-wider">Total QR Scans</div>
+                <div className="text-2xl font-black mt-1">
+                  {analyticsData.reduce((acc, a) => acc + a.qrScanCount, 0)}
+                </div>
+                <div className="text-[10px] text-indigo-200 mt-0.5">Scans across all shops</div>
+              </div>
+
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-4 rounded-2xl shadow-sm">
+                <div className="text-[11px] font-semibold text-emerald-100 uppercase tracking-wider">Scans Today</div>
+                <div className="text-2xl font-black mt-1">
+                  {analyticsData.reduce((acc, a) => acc + a.todayScans, 0)}
+                </div>
+                <div className="text-[10px] text-emerald-200 mt-0.5">Live today&apos;s activity</div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-2xl shadow-sm">
+                <div className="text-[11px] font-semibold text-purple-100 uppercase tracking-wider">Unique Customers</div>
+                <div className="text-2xl font-black mt-1">
+                  {analyticsData.reduce((acc, a) => acc + a.uniqueCustomers, 0)}
+                </div>
+                <div className="text-[10px] text-purple-200 mt-0.5">Distinct mobile numbers</div>
+              </div>
+
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-4 rounded-2xl shadow-sm">
+                <div className="text-[11px] font-semibold text-amber-100 uppercase tracking-wider">Accepted Claims</div>
+                <div className="text-2xl font-black mt-1">
+                  {analyticsData.reduce((acc, a) => acc + a.acceptedClaims, 0)}
+                </div>
+                <div className="text-[10px] text-amber-200 mt-0.5">Successfully scratched</div>
+              </div>
+            </div>
+
+            {/* Merchant Detailed Table */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-3.5">Shop & Merchant</th>
+                    <th className="px-6 py-3.5 text-center">QR Scans</th>
+                    <th className="px-6 py-3.5 text-center">Scans Today</th>
+                    <th className="px-6 py-3.5 text-center">Customers</th>
+                    <th className="px-6 py-3.5 text-center">Total Requests</th>
+                    <th className="px-6 py-3.5 text-center">Accepted</th>
+                    <th className="px-6 py-3.5 text-center">Declined</th>
+                    <th className="px-6 py-3.5 text-center">Pending</th>
+                    <th className="px-6 py-3.5 text-right">QR Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {analyticsData.map((item) => (
+                    <tr key={item.shopId} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900">{item.shopName}</div>
+                        <div className="text-[11px] text-slate-500">{item.merchantName} ({item.merchantEmail})</div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="font-black text-slate-900 text-sm">{item.qrScanCount}</span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                          {item.todayScans}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center font-semibold text-slate-800">
+                        {item.uniqueCustomers}
+                      </td>
+                      <td className="px-6 py-4 text-center font-bold text-slate-900">
+                        {item.totalClaims}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          {item.acceptedClaims}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
+                          {item.rejectedClaims}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                          {item.pendingClaims}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleShowQr({ id: item.shopId, name: item.shopName, slug: item.shopId })}
+                          className="px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-xs inline-flex items-center gap-1.5 transition-all"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                          <span>Get QR</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {analyticsData.length === 0 && (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-8 text-center text-slate-400">
+                        Koi shop data nahi mil raha.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add / Edit Shop Modal */}
@@ -850,6 +1053,29 @@ export default function AdminDashboardPage() {
                 />
               </div>
 
+              {/* Gmail OAuth field */}
+              <div className="pt-2 border-t border-slate-100">
+                <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  </svg>
+                  Gmail (Google Login) <span className="text-slate-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={merchantForm.gmailEmail}
+                  onChange={(e) => setMerchantForm({ ...merchantForm, gmailEmail: e.target.value })}
+                  placeholder="merchant@gmail.com"
+                  className="w-full p-2.5 bg-blue-50 border border-blue-200 rounded-xl outline-none focus:border-blue-500 text-slate-800"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Yeh Gmail se merchant &quot;Sign in with Google&quot; button se login kar sakega.
+                </p>
+              </div>
+
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
                 <button
                   type="button"
@@ -866,6 +1092,95 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Generated QR Code Modal */}
+      {qrModalShop && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 text-center">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+              <div className="text-left">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-600">Admin QR Generator</div>
+                <h3 className="text-base font-black text-slate-900 leading-tight">{qrModalShop.name}</h3>
+              </div>
+              <button
+                onClick={() => setQrModalShop(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            {isLoadingQr ? (
+              <div className="py-12 text-slate-400 font-medium text-xs flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                QR Code generate ho raha hai...
+              </div>
+            ) : qrDataUrl ? (
+              <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 inline-block shadow-inner">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={qrDataUrl}
+                    alt={`QR Code for ${qrModalShop.name}`}
+                    className="w-56 h-56 mx-auto rounded-lg"
+                  />
+                </div>
+
+                <div className="text-xs text-slate-500">
+                  Customer is QR code ko scan karke directly <strong className="text-slate-800">{qrModalShop.name}</strong> ke landing page par jayega.
+                </div>
+
+                {qrUrl && (
+                  <div className="bg-slate-100 p-2.5 rounded-xl flex items-center justify-between gap-2 text-xs font-mono text-slate-700">
+                    <span className="truncate">{qrUrl}</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(qrUrl);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      className="p-1 text-slate-500 hover:text-slate-900 flex-shrink-0"
+                      title="Copy URL"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {copiedLink && (
+                  <div className="text-[11px] font-semibold text-emerald-600">✓ Link copied to clipboard!</div>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <a
+                    href={qrDataUrl}
+                    download={`QR-${qrModalShop.name.replace(/\s+/g, '-')}.png`}
+                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download PNG</span>
+                  </a>
+
+                  {qrUrl && (
+                    <a
+                      href={qrUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl flex items-center justify-center gap-1 transition-all"
+                      title="Test Scan Link"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>Test Link</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-rose-500 text-xs">QR Code generate karne mein fail hua.</div>
+            )}
           </div>
         </div>
       )}

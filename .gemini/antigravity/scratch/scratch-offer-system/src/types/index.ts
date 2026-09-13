@@ -26,8 +26,12 @@ export interface Merchant {
   name: string;
   phone?: string;
   isActive: boolean;
+  googleId?: string;       // Google OAuth sub ID
+  googleEmail?: string;    // Gmail address for OAuth login
+  loginType?: 'password' | 'google' | 'both'; // Which login methods allowed
   createdAt: string;
 }
+
 
 export interface MerchantSession {
   id: string;
@@ -115,4 +119,28 @@ export interface CreateClaimRequest {
   customerLat?: number;
   customerLng?: number;
   distanceMeters?: number;
+}
+
+export interface QrScan {
+  id: string;
+  shopId: string;
+  shopName: string;
+  scannedAt: string;
+  userAgent?: string;
+}
+
+export interface ShopAnalytics {
+  shopId: string;
+  shopName: string;
+  merchantName: string;
+  merchantEmail: string;
+  qrScanCount: number;
+  uniqueCustomers: number;
+  totalClaims: number;
+  pendingClaims: number;
+  acceptedClaims: number;
+  rejectedClaims: number;
+  todayScans: number;
+  todayClaims: number;
+  qrUrl: string;
 }

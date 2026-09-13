@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
     passwordHash: body.password,
     phone: body.phone,
     isActive: body.isActive ?? true,
+    googleEmail: body.gmailEmail || undefined,
+    loginType: body.gmailEmail ? 'both' : 'password',
   });
 
   return NextResponse.json({ success: true, merchant });
