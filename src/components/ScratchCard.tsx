@@ -314,68 +314,7 @@ export default function ScratchCard({ claim: initialClaim, onStatusUpdated }: Sc
           </div>
         )}
 
-        {/* Cashier Verification Status Card */}
-        <div className="mt-4 pt-4 border-t border-slate-200">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Cashier Verification Status
-          </div>
 
-          {claim.status === 'PENDING' && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 animate-pulse-subtle">
-              <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 animate-spin" style={{ animationDuration: '6s' }} />
-              <div className="text-xs">
-                <span className="font-bold">Waiting for Cashier at Counter...</span>
-                <p className="text-amber-700/90 text-[11px] mt-0.5">
-                  The merchant at <strong>{claim.shopName}</strong> has been notified.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {claim.status === 'ACCEPTED' && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900">
-              <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-              <div className="text-xs">
-                <span className="font-bold text-emerald-800 text-sm">✅ Claim Accepted by Cashier!</span>
-                <p className="text-emerald-700 text-[11px] mt-0.5">
-                  10% discount has been approved on your bill. Thank you for visiting!
-                </p>
-              </div>
-            </div>
-          )}
-
-          {claim.status === 'REJECTED' && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900">
-              <XCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
-              <div className="text-xs">
-                <span className="font-bold">Claim Rejected</span>
-                <p className="text-rose-700 text-[11px] mt-0.5">
-                  {claim.rejectionReason || 'The merchant could not verify the claim at this time.'}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Customer Receipt Details */}
-        <div className="mt-4 bg-slate-50 p-3 rounded-xl border border-slate-200/80 text-[11px] text-slate-600 space-y-1">
-          <div className="flex justify-between">
-            <span className="text-slate-500">Customer:</span>
-            <span className="font-semibold text-slate-800">{claim.customerName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Mobile:</span>
-            <span className="font-mono font-medium text-slate-700">+91 {claim.customerMobile}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Store:</span>
-            <span className="font-medium text-slate-800">{claim.shopName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Detection Method:</span>
-            <span className="font-mono text-indigo-600 font-medium">{claim.identificationMethod}</span>
-          </div>
-        </div>
       </div>
     </div>
   );

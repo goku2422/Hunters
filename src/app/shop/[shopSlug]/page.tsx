@@ -125,16 +125,11 @@ export default function ShopScanPage() {
         body: JSON.stringify({ shopId: data.shop.id }),
       }).catch(() => {});
 
-      // Auto-claim if details are saved in localStorage
+      // Populate saved customer details
       if (typeof window !== "undefined") {
-        const savedName = localStorage.getItem("customer_name");
-        if (savedName && savedMobile && savedMobile.length === 10) {
-          setName(savedName);
-          setMobile(savedMobile);
-          createClaimForShop(savedName, savedMobile, data.shop.id);
-        } else {
-          setShowEditForm(true);
-        }
+        const savedName = localStorage.getItem("customer_name") || "";
+        setName(savedName);
+        setMobile(savedMobile);
       }
     } catch (err) {
       setShopError("Shop load karne mein error aaya.");
