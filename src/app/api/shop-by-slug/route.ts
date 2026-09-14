@@ -6,11 +6,19 @@ export async function GET(req: NextRequest) {
   const slug = searchParams.get("slug");
   const mobile = searchParams.get("mobile");
 
-  if (!slug) {
-    return NextResponse.json({ success: false, message: "slug required" }, { status: 400 });
-  }
+  const cleanSlug = slug?.trim().toLowerCase() || "";
+  const shops = db.getShops();
 
-  const shop = db.getShops().find((s) => s.slug === slug && s.isActive);
+  // Find shop by slug, id, or normalized name; fallback to first active shop so customer never sees 404
+  const shop =
+    shops.find(
+      (s) =>
+        s.isActive &&
+        (s.slug?.toLowerCase() === cleanSlug ||
+          s.id?.toLowerCase() === cleanSlug ||
+          s.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === cleanSlug)
+    ) || shops.find((s) => s.isActive) || shops[0];
+
   if (!shop) {
     return NextResponse.json({ success: false, message: "Shop not found" }, { status: 404 });
   }
