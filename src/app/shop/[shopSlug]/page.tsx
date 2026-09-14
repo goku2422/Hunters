@@ -341,12 +341,46 @@ export default function ShopScanPage() {
 
             {/* 5. INTERACTIVE SCRATCH CARD & CLAIM SECTION */}
             {createdClaim ? (
-              <div className="my-4">
-                <div className="bg-emerald-950 text-white rounded-2xl p-3.5 mb-3 border border-emerald-800 flex items-center gap-2.5 text-xs font-semibold shadow-sm">
-                  <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <span>Live Merchant Claim Active for {shop?.name}!</span>
-                </div>
-                <ScratchCard claim={createdClaim} />
+              <div className="my-4 space-y-3">
+                {createdClaim.status === "PENDING" && (
+                  <div className="bg-amber-50 text-amber-900 border border-amber-300 rounded-2xl p-4 flex items-center gap-3 text-xs font-semibold animate-pulse shadow-sm">
+                    <Loader2 className="w-5 h-5 text-amber-600 animate-spin flex-shrink-0" />
+                    <div>
+                      <div className="font-extrabold text-sm text-amber-950">Card collection request sent.</div>
+                      <div className="text-amber-800 text-[11px] mt-0.5">Waiting for merchant approval...</div>
+                    </div>
+                  </div>
+                )}
+
+                {createdClaim.status === "ACCEPTED" && (
+                  <div className="bg-emerald-50 text-emerald-900 border border-emerald-300 rounded-2xl p-4 flex items-center gap-3 text-xs font-semibold shadow-md">
+                    <Sparkles className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                    <div>
+                      <div className="font-extrabold text-sm text-emerald-950">🎉 Card collected successfully!</div>
+                      <div className="text-emerald-800 text-[11px] mt-0.5">Stamp #{stampsCount} has been added to your card!</div>
+                    </div>
+                  </div>
+                )}
+
+                {createdClaim.status === "REJECTED" && (
+                  <div className="bg-rose-50 text-rose-900 border border-rose-300 rounded-2xl p-4 flex items-center gap-3 text-xs font-semibold shadow-sm">
+                    <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+                    <div>
+                      <div className="font-extrabold text-sm text-rose-950">❌ Merchant rejected your card collection request.</div>
+                      <div className="text-rose-800 text-[11px] mt-0.5">{createdClaim.rejectionReason || "Please verify with cashier."}</div>
+                    </div>
+                  </div>
+                )}
+
+                <ScratchCard
+                  claim={createdClaim}
+                  onStatusUpdated={(updatedClaim) => {
+                    setCreatedClaim(updatedClaim);
+                    if (updatedClaim.status === "ACCEPTED") {
+                      setStampsCount((prev) => Math.max(prev + 1, 1));
+                    }
+                  }}
+                />
               </div>
             ) : showEditForm ? (
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 my-3">

@@ -172,21 +172,16 @@ export default function MerchantDashboardPage() {
     );
   };
 
-  // Handle Accept Claim
+  // Handle Accept Card Collection Request
   const handleAccept = async (claimId: string) => {
     setActionInProgress(claimId);
     try {
-      const res = await fetch(`/api/claims/${claimId}`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/merchant/card-requests/${claimId}/approve`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'ACCEPTED',
-          resolvedBy: merchant?.name || 'Cashier',
-        }),
       });
 
       if (res.ok) {
-        // If modal was showing this claim, close modal
         if (incomingClaimAlert?.id === claimId) {
           setIncomingClaimAlert(null);
         }
@@ -199,18 +194,14 @@ export default function MerchantDashboardPage() {
     }
   };
 
-  // Handle Reject Claim
+  // Handle Reject Card Collection Request
   const handleReject = async (claimId: string, reason: string) => {
     setActionInProgress(claimId);
     try {
-      const res = await fetch(`/api/claims/${claimId}`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/merchant/card-requests/${claimId}/reject`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'REJECTED',
-          resolvedBy: merchant?.name || 'Cashier',
-          rejectionReason: reason,
-        }),
+        body: JSON.stringify({ reason }),
       });
 
       if (res.ok) {
@@ -634,7 +625,59 @@ export default function MerchantDashboardPage() {
         </div>
       </div>
 
-      <MerchantBottomNav activeView={merchantView} onSelect={setMerchantView} />
+      {/* Real-time Merchant Card Request Notification Popup (Prompt Section 5 & 8) */}
+      {incomingClaimAlert && incomingClaimAlert.status === 'PENDING' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-2 border-amber-400 animate-bounce-short">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5 text-amber-600">
+                <div className="p-2 rounded-xl bg-amber-100 animate-pulse">
+                  <Bell className="w-5 h-5 text-amber-700" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">New Card Collection Request</h3>
+                  <p className="text-[11px] text-slate-500">{shop?.name}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="my-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs text-slate-700">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Customer:</span>
+                <span className="font-bold text-slate-900">{incomingClaimAlert.customerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Card:</span>
+                <span className="font-semibold text-emerald-700">Scratch Card</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Time:</span>
+                <span className="font-mono font-semibold text-slate-600">
+                  {new Date(incomingClaimAlert.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setRejectingClaim(incomingClaimAlert)}
+                className="flex-1 py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 active:scale-95 transition-all"
+              >
+                REJECT
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAccept(incomingClaimAlert.id)}
+                disabled={actionInProgress === incomingClaimAlert.id}
+                className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all disabled:opacity-50"
+              >
+                APPROVE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reject Modal */}
       {rejectingClaim && (

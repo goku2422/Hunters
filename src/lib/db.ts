@@ -398,6 +398,20 @@ class DatabaseStore {
     return this.data.claims.find((c) => c.id === id);
   }
 
+  public hasScannedToday(mobileOrId: string, shopId: string): Claim | undefined {
+    const cleanMobile = mobileOrId.replace(/[^0-9]/g, '').slice(-10);
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    return this.data.claims.find((c) => {
+      const isCustomer =
+        c.customerId === mobileOrId ||
+        (Boolean(cleanMobile) && c.customerMobile === cleanMobile);
+      const isShop = c.shopId === shopId;
+      const claimDate = new Date(c.createdAt).toISOString().slice(0, 10);
+      return isCustomer && isShop && claimDate === todayStr;
+    });
+  }
+
   public checkRecentClaim(mobile: string, shopId: string): Claim | undefined {
     const cleanMobile = mobile.replace(/[^0-9]/g, '').slice(-10);
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;

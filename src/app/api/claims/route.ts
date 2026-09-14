@@ -44,15 +44,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fraud / Spam prevention: 1 claim per 24 hours per mobile per shop
-    const existingRecentClaim = db.checkRecentClaim(cleanMobile, body.shopId);
-    if (existingRecentClaim) {
+    // Strict 1-scan-per-day restriction per customer per merchant handled on backend/database
+    const existingTodayClaim = db.hasScannedToday(cleanMobile, body.shopId);
+    if (existingTodayClaim) {
       return NextResponse.json(
         {
           success: false,
           isDuplicate: true,
-          existingClaim: existingRecentClaim,
-          message: `You have already claimed a discount at ${shop.name} today! Each customer can claim once every 24 hours.`,
+          claim: existingTodayClaim,
+          message: `Already scanned today. You can scan ${shop.name}'s QR code again tomorrow.`,
         },
         { status: 429 }
       );
