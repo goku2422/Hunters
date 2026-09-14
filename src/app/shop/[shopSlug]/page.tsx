@@ -212,8 +212,14 @@ export default function ShopScanPage() {
           {/* Stamp Summary Title */}
           <div className="mb-6">
             <h2 className="text-3xl font-black text-white tracking-tight">
-              {stampsCount} of {offer.visitsRequired} Stamps
+              {stampsCount} of {offer.visitsRequired || 8} Stamps
             </h2>
+            <div className="mt-3 h-2.5 rounded-full bg-white/25 overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, (stampsCount / (offer.visitsRequired || 8)) * 100))}%` }}
+              />
+            </div>
           </div>
 
           {/* White Tab Switcher Container */}
@@ -283,17 +289,18 @@ export default function ShopScanPage() {
                 STAMP CARD
               </div>
 
-              {/* 5 Circular Stamp Slots matching reference image */}
-              <div className="flex items-center justify-around gap-2 mb-4">
-                {Array.from({ length: 5 }).map((_, index) => {
+              {/* 8 Circular Stamp Slots (0 to 8 stamps matching customer dashboard) */}
+              <div className="grid grid-cols-4 gap-3 mb-5 max-w-[280px] mx-auto justify-items-center">
+                {Array.from({ length: offer.visitsRequired || 8 }).map((_, index) => {
                   const stampNum = index + 1;
                   const isEarned = stampNum <= stampsCount;
+                  const isLast = stampNum === (offer.visitsRequired || 8);
 
                   if (isEarned) {
                     return (
                       <div
                         key={stampNum}
-                        className="w-11 h-11 rounded-full bg-[#80050F] text-white flex items-center justify-center font-bold text-sm shadow-md transition-all scale-105"
+                        className="w-12 h-12 rounded-full bg-[#80050F] text-white flex items-center justify-center font-bold text-sm shadow-md transition-all scale-105"
                         title={`Stamp #${stampNum} Collected`}
                       >
                         <Check className="w-5 h-5 stroke-[3]" />
@@ -304,9 +311,14 @@ export default function ShopScanPage() {
                   return (
                     <div
                       key={stampNum}
-                      className="w-11 h-11 rounded-full border-2 border-dashed border-slate-200 text-slate-300 font-bold text-xs flex items-center justify-center bg-white shadow-2xs"
+                      className={`w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center font-bold text-xs shadow-2xs transition-all ${
+                        isLast
+                          ? "border-[#80050F]/40 bg-rose-50 text-[#80050F]"
+                          : "border-slate-200 bg-white text-slate-300"
+                      }`}
+                      title={`Stamp #${stampNum}`}
                     >
-                      {stampNum}
+                      {isLast ? <Gift className="w-5 h-5" /> : stampNum}
                     </div>
                   );
                 })}
