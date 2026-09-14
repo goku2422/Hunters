@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
@@ -26,8 +26,44 @@ export default function ShopScanPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdClaim, setCreatedClaim] = useState<Claim | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
 
-  // 1. Load shop info by slug + log QR scan
+  // Auto-submit claim helper
+  const createClaimForShop = useCallback(async (custName: string, custMobile: string, targetShopId: string) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch("/api/claims", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: custName,
+          mobile: custMobile,
+          shopId: targetShopId,
+          identificationMethod: "COUNTER_SESSION",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setSubmitError(data.message || "Request submit karne mein error aaya.");
+        setShowEditForm(true);
+        return;
+      }
+      // Save customer details for instant auto-open on future QR scans
+      if (typeof window !== "undefined") {
+        localStorage.setItem("customer_name", custName);
+        localStorage.setItem("customer_mobile", custMobile);
+      }
+      setCreatedClaim(data.claim);
+    } catch (err) {
+      setSubmitError("Server se connect nahi ho pa raha. Dobara try karo.");
+      setShowEditForm(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, []);
+
+  // 1. Load shop info by slug + log QR scan + auto-open claim if details saved
   const loadShop = useCallback(async () => {
     if (!shopSlug) return;
     try {
@@ -45,44 +81,33 @@ export default function ShopScanPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shopId: data.shop.id }),
       }).catch(() => {});
+
+      // Auto-claim if details are saved in localStorage
+      if (typeof window !== "undefined") {
+        const savedName = localStorage.getItem("customer_name");
+        const savedMobile = localStorage.getItem("customer_mobile");
+        if (savedName && savedMobile && savedMobile.length === 10) {
+          setName(savedName);
+          setMobile(savedMobile);
+          createClaimForShop(savedName, savedMobile, data.shop.id);
+        } else {
+          setShowEditForm(true);
+        }
+      }
     } catch (err) {
       setShopError("Shop load karne mein error aaya.");
     } finally {
       setIsLoadingShop(false);
     }
-  }, [shopSlug]);
+  }, [shopSlug, createClaimForShop]);
 
   useEffect(() => { loadShop(); }, [loadShop]);
 
-  // 2. Submit claim request
+  // 2. Manual Submit claim request
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!shop) return;
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    try {
-      const res = await fetch("/api/claims", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          mobile,
-          shopId: shop.id,
-          identificationMethod: "COUNTER_SESSION",
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setSubmitError(data.message || "Request submit karne mein error aaya.");
-        return;
-      }
-      setCreatedClaim(data.claim);
-    } catch (err) {
-      setSubmitError("Server se connect nahi ho pa raha. Dobara try karo.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    createClaimForShop(name, mobile, shop.id);
   };
 
   // Loading state
