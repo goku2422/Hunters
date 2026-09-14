@@ -243,7 +243,7 @@ class DatabaseStore {
   public getMerchants(): Array<Merchant & { shop?: Shop }> {
     return this.data.merchants.map((m) => ({
       ...m,
-      shop: this.data.shops.find((s) => s.id === m.shopId),
+      shop: this.data.shops.find((s) => s.id === m.shopId || s.slug === m.shopId) || this.getShopById(m.shopId),
     }));
   }
 

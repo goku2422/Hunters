@@ -247,13 +247,39 @@ export default function AdminDashboardPage() {
   const handleSaveMerchant = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!merchantForm.name.trim()) {
+        alert('Please enter a valid merchant name.');
+        return;
+      }
+      if (!merchantForm.email.trim()) {
+        alert('Please enter a valid merchant email.');
+        return;
+      }
+      if (!merchantForm.password.trim()) {
+        alert('Please enter a password for the merchant.');
+        return;
+      }
+
+      const targetShopId = merchantForm.shopId || shops[0]?.id;
+      if (!targetShopId) {
+        alert('Please select a valid shop to assign to this merchant.');
+        return;
+      }
+
+      const payload = {
+        ...merchantForm,
+        shopId: targetShopId,
+      };
+
       const res = await fetch('/api/admin/merchants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(merchantForm),
+        body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
         setIsAddMerchantModalOpen(false);
         setMerchantForm({
           shopId: shops[0]?.id || '',
@@ -264,9 +290,13 @@ export default function AdminDashboardPage() {
           gmailEmail: '',
         });
         await fetchAdminData();
+        alert(`Merchant "${data.merchant?.name}" created successfully!`);
+      } else {
+        alert(data.message || 'Error creating merchant. Please check all fields.');
       }
     } catch (err) {
       console.error('Error saving merchant:', err);
+      alert('Network error while saving merchant account.');
     }
   };
 
