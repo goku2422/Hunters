@@ -110,40 +110,53 @@ class DatabaseStore {
 
   private loadFromDisk() {
     try {
-      let parsed: Partial<DatabaseData> | null = null;
+      let rootData: Partial<DatabaseData> | null = null;
+      let primaryData: Partial<DatabaseData> | null = null;
+
+      if (fs.existsSync(ROOT_SEED_FILE)) {
+        try {
+          const raw = fs.readFileSync(ROOT_SEED_FILE, 'utf-8');
+          rootData = JSON.parse(raw) as Partial<DatabaseData>;
+        } catch (err) {}
+      }
+      if (!rootData || !rootData.shops?.length) {
+        rootData = seedDatabaseJson as unknown as Partial<DatabaseData>;
+      }
 
       if (fs.existsSync(PRIMARY_DB_FILE)) {
         try {
           const raw = fs.readFileSync(PRIMARY_DB_FILE, 'utf-8');
-          parsed = JSON.parse(raw) as Partial<DatabaseData>;
-        } catch (err) {
-          console.error('Error reading PRIMARY_DB_FILE:', err);
-        }
-      } else if (fs.existsSync(ROOT_SEED_FILE)) {
-        try {
-          const raw = fs.readFileSync(ROOT_SEED_FILE, 'utf-8');
-          parsed = JSON.parse(raw) as Partial<DatabaseData>;
-        } catch (err) {
-          console.error('Error reading ROOT_SEED_FILE:', err);
-        }
+          primaryData = JSON.parse(raw) as Partial<DatabaseData>;
+        } catch (err) {}
       }
 
-      if (!parsed) {
-        parsed = seedDatabaseJson as unknown as Partial<DatabaseData>;
-      }
+      const mergeItems = <T extends { id: string }>(rootItems?: T[], primaryItems?: T[]): T[] => {
+        const map = new Map<string, T>();
+        (rootItems || []).forEach((item) => {
+          if (item?.id) map.set(item.id, item);
+        });
+        (primaryItems || []).forEach((item) => {
+          if (item?.id) map.set(item.id, item);
+        });
+        return Array.from(map.values());
+      };
 
-      if (parsed) {
-        this.data = {
-          admins: parsed.admins?.length ? (parsed.admins as AdminUser[]) : this.data.admins,
-          shops: parsed.shops?.length ? (parsed.shops as Shop[]) : this.data.shops,
-          merchants: parsed.merchants?.length ? (parsed.merchants as Merchant[]) : this.data.merchants,
-          merchantSessions: parsed.merchantSessions ?? this.data.merchantSessions,
-          customers: parsed.customers ?? this.data.customers,
-          offers: parsed.offers?.length ? (parsed.offers as Offer[]) : this.data.offers,
-          claims: parsed.claims ?? this.data.claims,
-          qrScans: parsed.qrScans ?? [],
-        };
-      }
+      this.data = {
+        admins: mergeItems(rootData?.admins as AdminUser[], primaryData?.admins as AdminUser[]),
+        shops: mergeItems(rootData?.shops as Shop[], primaryData?.shops as Shop[]),
+        merchants: mergeItems(rootData?.merchants as Merchant[], primaryData?.merchants as Merchant[]),
+        merchantSessions: mergeItems(rootData?.merchantSessions as MerchantSession[], primaryData?.merchantSessions as MerchantSession[]),
+        customers: mergeItems(rootData?.customers as Customer[], primaryData?.customers as Customer[]),
+        offers: mergeItems(rootData?.offers as Offer[], primaryData?.offers as Offer[]),
+        claims: mergeItems(rootData?.claims as Claim[], primaryData?.claims as Claim[]),
+        qrScans: mergeItems(rootData?.qrScans as QrScan[], primaryData?.qrScans as QrScan[]),
+      };
+
+      if (!this.data.admins.length) this.data.admins = INITIAL_ADMINS;
+      if (!this.data.shops.length) this.data.shops = INITIAL_SHOPS;
+      if (!this.data.merchants.length) this.data.merchants = INITIAL_MERCHANTS;
+      if (!this.data.offers.length) this.data.offers = INITIAL_OFFERS;
+
       this.isLoaded = true;
     } catch (err) {
       console.error('Error loading database:', err);
@@ -715,6 +728,6 @@ class DatabaseStore {
 // Global Singleton
 const globalForDb = globalThis as unknown as { dbStore?: DatabaseStore };
 export const db = globalForDb.dbStore || new DatabaseStore();
-if (process.env.NODE_ENV !== 'production') globalForDb.dbStore = db;
+globalForDb.dbStore = db;
 
 
