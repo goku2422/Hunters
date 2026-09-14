@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 import QRCode from "qrcode";
@@ -25,7 +25,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Shop not found" }, { status: 404 });
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const host = req.headers.get("host") || req.headers.get("x-forwarded-host");
+  const proto = req.headers.get("x-forwarded-proto") || "https";
+  const baseUrl = host ? `${proto}://${host}` : (process.env.NEXTAUTH_URL || "http://localhost:3000");
   const qrUrl = `${baseUrl}/shop/${shop.slug}`;
 
   try {
@@ -66,7 +68,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const host = req.headers.get("host") || req.headers.get("x-forwarded-host");
+  const proto = req.headers.get("x-forwarded-proto") || "https";
+  const baseUrl = host ? `${proto}://${host}` : (process.env.NEXTAUTH_URL || "http://localhost:3000");
   const analytics = db.getShopAnalytics(baseUrl);
   return NextResponse.json({ success: true, analytics });
 }

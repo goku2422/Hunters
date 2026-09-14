@@ -697,11 +697,12 @@ function MerchantHomeView({ shop, claims, onAccept, onReject }: { shop: Shop | n
   const pendingClaims = claims.filter((claim) => claim.status === 'PENDING');
 
   useEffect(() => {
-    const claimUrl = `${window.location.origin}/claim${shop?.id ? `?shop=${shop.id}` : ''}`;
+    if (!shop) return;
+    const claimUrl = `${window.location.origin}/shop/${shop.slug || shop.id}`;
     QRCode.toDataURL(claimUrl, { width: 180, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(''));
-  }, [shop?.id]);
+  }, [shop]);
 
   return <main className="min-h-[calc(100vh-60px)] bg-[#f3f7f6] pb-4 text-[#142033]">
     <section className="rounded-b-[26px] bg-gradient-to-br from-[#123c46] to-[#1f6970] px-5 pb-5 pt-7 text-white shadow-lg shadow-[#123c46]/20">
