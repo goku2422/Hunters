@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { QrCode, Store, CheckCircle2, AlertCircle, Loader2, Gift, Sparkles } from "lucide-react";
+import { QrCode, Store, AlertCircle, Loader2, Gift, Sparkles } from "lucide-react";
+import ScratchCard from "@/components/ScratchCard";
+import { Claim } from "@/types";
 
 interface ShopInfo {
   id: string;
@@ -23,8 +25,7 @@ export default function ShopScanPage() {
   const [mobile, setMobile] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [claimSuccess, setClaimSuccess] = useState(false);
-  const [claimCode, setClaimCode] = useState<string | null>(null);
+  const [createdClaim, setCreatedClaim] = useState<Claim | null>(null);
 
   // 1. Load shop info by slug + log QR scan
   const loadShop = useCallback(async () => {
@@ -53,7 +54,7 @@ export default function ShopScanPage() {
 
   useEffect(() => { loadShop(); }, [loadShop]);
 
-  // 2. Submit claim
+  // 2. Submit claim request
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!shop) return;
@@ -76,8 +77,7 @@ export default function ShopScanPage() {
         setSubmitError(data.message || "Request submit karne mein error aaya.");
         return;
       }
-      setClaimCode(data.claim?.claimCode || null);
-      setClaimSuccess(true);
+      setCreatedClaim(data.claim);
     } catch (err) {
       setSubmitError("Server se connect nahi ho pa raha. Dobara try karo.");
     } finally {
@@ -112,34 +112,30 @@ export default function ShopScanPage() {
     );
   }
 
-  // Success state
-  if (claimSuccess) {
+  // Active Scratch Card state (Live polling merchant status)
+  if (createdClaim) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-900 to-slate-900 p-4">
-        <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
-          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500" />
-          </div>
-          <h2 className="text-2xl font-black text-slate-900 mb-2">Request Bhej Di! 🎉</h2>
-          <p className="text-slate-500 text-sm mb-4">
-            Aapki scratch card request <span className="font-bold text-slate-700">{shop?.name}</span> ko bhej di gayi hai.
-            Merchant approve karega toh aap scratch kar sakte ho!
-          </p>
-          {claimCode && (
-            <div className="bg-slate-50 rounded-2xl p-4 mb-4">
-              <div className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Claim Code</div>
-              <div className="text-2xl font-black font-mono text-slate-900 tracking-widest">{claimCode}</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Shop Header */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-white/15 flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white flex-shrink-0">
+              <Store className="w-5 h-5" />
             </div>
-          )}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-            <span className="font-semibold">📱 Merchant ke paas jao</span> aur yeh code dikhao — woh approve karega!
+            <div>
+              <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Live Merchant Counter</div>
+              <div className="text-base font-black text-white">{shop?.name}</div>
+            </div>
           </div>
+
+          {/* Interactive Scratch Card Component */}
+          <ScratchCard claim={createdClaim} />
         </div>
       </div>
     );
   }
 
-  // Main form
+  // Main Form for customer entering details
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
@@ -215,7 +211,7 @@ export default function ShopScanPage() {
               className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-black text-sm rounded-xl shadow-lg shadow-emerald-600/30 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
             >
               {isSubmitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Bhej raha hun...</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> Request Bhej Raha Hun...</>
               ) : (
                 <><Gift className="w-4 h-4" /> Scratch Card Request Bhejo</>
               )}
@@ -223,7 +219,7 @@ export default function ShopScanPage() {
           </form>
 
           <p className="text-center text-[10px] text-slate-400 mt-4">
-            Request bhejne ke baad merchant approve karega. Sirf ek request 24 ghante mein.
+            Request bhejne ke baad merchant ko real-time bell sound baja kar request dikhai degi.
           </p>
         </div>
       </div>
