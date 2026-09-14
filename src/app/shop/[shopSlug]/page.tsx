@@ -388,69 +388,6 @@ export default function ShopScanPage() {
                   }}
                 />
               </div>
-            ) : showEditForm ? (
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 my-3">
-                <div className="flex items-center gap-2 mb-3">
-                  <Gift className="w-5 h-5 text-[#BA0C1E]" />
-                  <h3 className="text-sm font-bold text-slate-900">Scratch Card & Stamp Claim</h3>
-                </div>
-
-                {submitError && (
-                  <div className="mb-3 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>{submitError}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-3">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Aapka Naam
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Rahul Sharma"
-                      required
-                      minLength={2}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium text-xs outline-none focus:border-[#BA0C1E] focus:ring-1 focus:ring-[#BA0C1E]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Mobile Number
-                    </label>
-                    <input
-                      type="tel"
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      placeholder="10-digit mobile"
-                      required
-                      pattern="[0-9]{10}"
-                      maxLength={10}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium text-xs outline-none focus:border-[#BA0C1E] focus:ring-1 focus:ring-[#BA0C1E]"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-3 bg-[#BA0C1E] hover:bg-[#9a0918] text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Submitting Request...
-                      </>
-                    ) : (
-                      <>
-                        <Gift className="w-4 h-4" /> Claim Stamp & Open Scratch Card
-                      </>
-                    )}
-                  </button>
-                </form>
-              </div>
             ) : null}
           </>
         )}
