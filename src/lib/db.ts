@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import seedDatabaseJson from '../../data/database.json';
 import {
   Shop,
   Merchant,
@@ -109,23 +110,36 @@ class DatabaseStore {
 
   private loadFromDisk() {
     try {
-      // 1. Try reading primary writable file
-      let targetFile = PRIMARY_DB_FILE;
+      let parsed: Partial<DatabaseData> | null = null;
 
-      if (!fs.existsSync(PRIMARY_DB_FILE) && fs.existsSync(ROOT_SEED_FILE)) {
-        targetFile = ROOT_SEED_FILE;
+      if (fs.existsSync(PRIMARY_DB_FILE)) {
+        try {
+          const raw = fs.readFileSync(PRIMARY_DB_FILE, 'utf-8');
+          parsed = JSON.parse(raw) as Partial<DatabaseData>;
+        } catch (err) {
+          console.error('Error reading PRIMARY_DB_FILE:', err);
+        }
+      } else if (fs.existsSync(ROOT_SEED_FILE)) {
+        try {
+          const raw = fs.readFileSync(ROOT_SEED_FILE, 'utf-8');
+          parsed = JSON.parse(raw) as Partial<DatabaseData>;
+        } catch (err) {
+          console.error('Error reading ROOT_SEED_FILE:', err);
+        }
       }
 
-      if (fs.existsSync(targetFile)) {
-        const raw = fs.readFileSync(targetFile, 'utf-8');
-        const parsed = JSON.parse(raw) as Partial<DatabaseData>;
+      if (!parsed) {
+        parsed = seedDatabaseJson as unknown as Partial<DatabaseData>;
+      }
+
+      if (parsed) {
         this.data = {
-          admins: parsed.admins?.length ? parsed.admins : this.data.admins,
-          shops: parsed.shops?.length ? parsed.shops : this.data.shops,
-          merchants: parsed.merchants?.length ? parsed.merchants : this.data.merchants,
+          admins: parsed.admins?.length ? (parsed.admins as AdminUser[]) : this.data.admins,
+          shops: parsed.shops?.length ? (parsed.shops as Shop[]) : this.data.shops,
+          merchants: parsed.merchants?.length ? (parsed.merchants as Merchant[]) : this.data.merchants,
           merchantSessions: parsed.merchantSessions ?? this.data.merchantSessions,
           customers: parsed.customers ?? this.data.customers,
-          offers: parsed.offers?.length ? parsed.offers : this.data.offers,
+          offers: parsed.offers?.length ? (parsed.offers as Offer[]) : this.data.offers,
           claims: parsed.claims ?? this.data.claims,
           qrScans: parsed.qrScans ?? [],
         };
