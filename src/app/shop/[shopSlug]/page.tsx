@@ -257,16 +257,19 @@ export default function ShopScanPage() {
         ) : (
           <>
             {/* 2. REWARDS CARD BOX */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 my-3 flex items-start justify-between gap-3">
-              <div className="w-12 h-12 bg-[#FDF0F2] rounded-2xl flex items-center justify-center text-[#BA0C1E] flex-shrink-0">
+            <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 my-3 flex items-center justify-between gap-3">
+              <div className="w-13 h-13 bg-rose-50 rounded-2xl flex items-center justify-center text-[#80050F] flex-shrink-0">
                 <Gift className="w-6 h-6" />
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 mb-0.5">
+                  YOUR NEXT TREAT
+                </div>
                 <h3 className="text-xs font-bold text-slate-900 leading-snug">
-                  {offer.title}
+                  {offer.title || "Free cupcake of your choice"}
                 </h3>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
-                  {offer.visitsRequired} STAMPS • Collect {visitsLeft} more
+                  Collect {visitsLeft} more stamps
                 </p>
               </div>
               <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 whitespace-nowrap pt-1">
@@ -275,23 +278,22 @@ export default function ShopScanPage() {
             </div>
 
             {/* 3. STAMP CARD GRID */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 my-3">
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 my-3">
               <div className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase mb-4">
                 STAMP CARD
               </div>
 
-              {/* 8 Stamp Slots matching screenshot */}
-              <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 justify-items-center mb-4">
-                {Array.from({ length: offer.visitsRequired }).map((_, index) => {
+              {/* 5 Circular Stamp Slots matching reference image */}
+              <div className="flex items-center justify-around gap-2 mb-4">
+                {Array.from({ length: 5 }).map((_, index) => {
                   const stampNum = index + 1;
                   const isEarned = stampNum <= stampsCount;
-                  const isFinalGift = stampNum === offer.visitsRequired;
 
                   if (isEarned) {
                     return (
                       <div
                         key={stampNum}
-                        className="w-11 h-11 rounded-[16px] bg-[#BA0C1E] text-white flex items-center justify-center font-bold text-sm shadow-md transition-all scale-105"
+                        className="w-11 h-11 rounded-full bg-[#80050F] text-white flex items-center justify-center font-bold text-sm shadow-md transition-all scale-105"
                         title={`Stamp #${stampNum} Collected`}
                       >
                         <Check className="w-5 h-5 stroke-[3]" />
@@ -299,22 +301,10 @@ export default function ShopScanPage() {
                     );
                   }
 
-                  if (isFinalGift) {
-                    return (
-                      <div
-                        key={stampNum}
-                        className="w-11 h-11 rounded-[16px] border-2 border-dashed border-rose-300 bg-rose-50/50 text-rose-500 flex items-center justify-center"
-                        title="Final Reward Gift"
-                      >
-                        <Gift className="w-5 h-5" />
-                      </div>
-                    );
-                  }
-
                   return (
                     <div
                       key={stampNum}
-                      className="w-11 h-11 rounded-[16px] border-2 border-dashed border-slate-200 text-slate-300 font-bold text-xs flex items-center justify-center bg-white"
+                      className="w-11 h-11 rounded-full border-2 border-dashed border-slate-200 text-slate-300 font-bold text-xs flex items-center justify-center bg-white shadow-2xs"
                     >
                       {stampNum}
                     </div>
@@ -322,10 +312,26 @@ export default function ShopScanPage() {
                 })}
               </div>
 
-              <p className="text-center text-xs text-slate-500 font-medium pt-1">
-                You're <strong className="text-[#BA0C1E]">{visitsLeft} stamps</strong> away from{" "}
-                <strong className="text-slate-900">{offer.title}</strong>
+              <p className="text-center text-xs text-slate-500 font-medium pt-1 mb-4">
+                You're <strong className="text-[#80050F]">{visitsLeft} stamps</strong> away from your treat!
               </p>
+
+              {/* Claim Reward Pill Button matching reference image */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    const savedName = localStorage.getItem("customer_name") || "Guest Customer";
+                    const savedMob = localStorage.getItem("customer_mobile") || "9876543210";
+                    if (shop?.id) createClaimForShop(savedName, savedMob, shop.id);
+                  }
+                }}
+                disabled={isSubmitting}
+                className="w-full py-3.5 bg-[#80050F] hover:bg-[#68040C] text-white font-extrabold text-sm rounded-full shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              >
+                <Gift className="w-4 h-4" />
+                <span>Claim Reward</span>
+              </button>
             </div>
 
             {/* 4. BUSINESS INFO SECTION */}
