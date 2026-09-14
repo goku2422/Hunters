@@ -142,6 +142,23 @@ export default function ShopScanPage() {
     loadShop();
   }, [loadShop]);
 
+  // Poll for live stamp count updates every 2 seconds
+  useEffect(() => {
+    if (!shopSlug || !mobile) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/shop-by-slug?slug=${shopSlug}&mobile=${mobile}`);
+        const data = await res.json();
+        if (data.success && data.stampsCount !== undefined) {
+          setStampsCount(data.stampsCount);
+        }
+      } catch (err) {
+        // silent catch
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [shopSlug, mobile]);
+
   // Handle Form Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,7 +280,7 @@ export default function ShopScanPage() {
                 STAMP CARD
               </div>
 
-              {/* 8 Circular Stamp Slots */}
+              {/* 8 Stamp Slots matching screenshot */}
               <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 justify-items-center mb-4">
                 {Array.from({ length: offer.visitsRequired }).map((_, index) => {
                   const stampNum = index + 1;
@@ -274,7 +291,8 @@ export default function ShopScanPage() {
                     return (
                       <div
                         key={stampNum}
-                        className="w-10 h-10 rounded-full bg-[#BA0C1E] text-white flex items-center justify-center font-bold text-sm shadow-sm transition-transform scale-105"
+                        className="w-11 h-11 rounded-[16px] bg-[#BA0C1E] text-white flex items-center justify-center font-bold text-sm shadow-md transition-all scale-105"
+                        title={`Stamp #${stampNum} Collected`}
                       >
                         <Check className="w-5 h-5 stroke-[3]" />
                       </div>
@@ -285,7 +303,8 @@ export default function ShopScanPage() {
                     return (
                       <div
                         key={stampNum}
-                        className="w-10 h-10 rounded-full border-2 border-dashed border-rose-300 bg-rose-50/50 text-rose-500 flex items-center justify-center"
+                        className="w-11 h-11 rounded-[16px] border-2 border-dashed border-rose-300 bg-rose-50/50 text-rose-500 flex items-center justify-center"
+                        title="Final Reward Gift"
                       >
                         <Gift className="w-5 h-5" />
                       </div>
@@ -295,7 +314,7 @@ export default function ShopScanPage() {
                   return (
                     <div
                       key={stampNum}
-                      className="w-10 h-10 rounded-full border-2 border-dashed border-slate-200 text-slate-300 font-semibold text-xs flex items-center justify-center bg-white"
+                      className="w-11 h-11 rounded-[16px] border-2 border-dashed border-slate-200 text-slate-300 font-bold text-xs flex items-center justify-center bg-white"
                     >
                       {stampNum}
                     </div>
