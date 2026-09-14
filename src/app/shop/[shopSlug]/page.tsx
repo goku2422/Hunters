@@ -11,9 +11,8 @@ import {
   Sparkles,
   UtensilsCrossed,
   Home,
-  MapPin,
+  Compass,
   User,
-  CheckCircle2,
   Check,
 } from "lucide-react";
 import ScratchCard from "@/components/ScratchCard";
@@ -160,7 +159,7 @@ export default function ShopScanPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <div className="text-center text-slate-800">
-          <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-[#a80713]" />
+          <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-[#BA0C1E]" />
           <p className="text-sm font-semibold text-slate-600">Shop Dashboard load ho raha hai...</p>
         </div>
       </div>
@@ -186,33 +185,33 @@ export default function ShopScanPage() {
   const visitsLeft = Math.max(0, offer.visitsRequired - stampsCount);
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6] pb-24 text-slate-900 font-sans">
-      {/* 1. TOP HEADER BANNER (Crimson Red matching screenshot) */}
-      <header className="bg-gradient-to-b from-[#a80713] to-[#8c050f] text-white pt-6 pb-5 px-5 rounded-b-[32px] shadow-lg">
+    <div className="min-h-screen bg-[#f3f4f6] pb-28 text-slate-900 font-sans">
+      {/* 1. TOP HEADER BANNER (Deep Red Matching Reference Design) */}
+      <header className="bg-[#BA0C1E] text-white pt-6 pb-6 px-6 rounded-b-[28px] shadow-md">
         <div className="max-w-md mx-auto">
           {/* Shop Avatar & Name */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 bg-white text-[#a80713] font-black text-lg rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 bg-white text-[#BA0C1E] font-black text-xl rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
               {shopInitial}
             </div>
             <h1 className="text-base font-bold tracking-tight text-white">{shop?.name}</h1>
           </div>
 
-          {/* Stamp Summary */}
-          <div className="mb-5">
+          {/* Stamp Summary Title */}
+          <div className="mb-6">
             <h2 className="text-3xl font-black text-white tracking-tight">
               {stampsCount} of {offer.visitsRequired} Stamps
             </h2>
           </div>
 
-          {/* Tab Switcher (Rewards / Menu) */}
-          <div className="flex items-center justify-center bg-black/20 p-1 rounded-full max-w-xs mx-auto">
+          {/* White Tab Switcher Container */}
+          <div className="bg-white rounded-full p-1.5 shadow-sm max-w-md mx-auto flex items-center justify-between border border-slate-100">
             <button
               onClick={() => setActiveTab("rewards")}
-              className={`flex-1 py-2 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              className={`w-1/2 py-2.5 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "rewards"
-                  ? "bg-[#80050f] text-white shadow-md"
-                  : "text-white/80 hover:text-white"
+                  ? "bg-[#BA0C1E] text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
               <Gift className="w-4 h-4" />
@@ -220,10 +219,10 @@ export default function ShopScanPage() {
             </button>
             <button
               onClick={() => setActiveTab("menu")}
-              className={`flex-1 py-2 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+              className={`w-1/2 py-2.5 px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                 activeTab === "menu"
-                  ? "bg-[#80050f] text-white shadow-md"
-                  : "text-white/80 hover:text-white"
+                  ? "bg-[#BA0C1E] text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
               }`}
             >
               <UtensilsCrossed className="w-4 h-4" />
@@ -246,11 +245,11 @@ export default function ShopScanPage() {
         ) : (
           <>
             {/* 2. REWARDS CARD BOX */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 my-3 flex items-center justify-between gap-3">
-              <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-[#a80713] flex-shrink-0">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 my-3 flex items-start justify-between gap-3">
+              <div className="w-12 h-12 bg-[#FDF0F2] rounded-2xl flex items-center justify-center text-[#BA0C1E] flex-shrink-0">
                 <Gift className="w-6 h-6" />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pt-0.5">
                 <h3 className="text-xs font-bold text-slate-900 leading-snug">
                   {offer.title}
                 </h3>
@@ -258,13 +257,13 @@ export default function ShopScanPage() {
                   {offer.visitsRequired} STAMPS • Collect {visitsLeft} more
                 </p>
               </div>
-              <div className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 whitespace-nowrap self-start">
+              <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 whitespace-nowrap pt-1">
                 {offer.expiryDays} DAY Expiry
               </div>
             </div>
 
             {/* 3. STAMP CARD GRID */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 my-3">
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 my-3">
               <div className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase mb-4">
                 STAMP CARD
               </div>
@@ -280,7 +279,7 @@ export default function ShopScanPage() {
                     return (
                       <div
                         key={stampNum}
-                        className="w-11 h-11 rounded-full bg-[#a80713] text-white flex items-center justify-center font-bold text-sm shadow-md transition-transform scale-105"
+                        className="w-10 h-10 rounded-full bg-[#BA0C1E] text-white flex items-center justify-center font-bold text-sm shadow-sm transition-transform scale-105"
                       >
                         <Check className="w-5 h-5 stroke-[3]" />
                       </div>
@@ -291,7 +290,7 @@ export default function ShopScanPage() {
                     return (
                       <div
                         key={stampNum}
-                        className="w-11 h-11 rounded-full border-2 border-dashed border-rose-400 bg-rose-50 text-rose-500 flex items-center justify-center"
+                        className="w-10 h-10 rounded-full border-2 border-dashed border-rose-300 bg-rose-50/50 text-rose-500 flex items-center justify-center"
                       >
                         <Gift className="w-5 h-5" />
                       </div>
@@ -301,7 +300,7 @@ export default function ShopScanPage() {
                   return (
                     <div
                       key={stampNum}
-                      className="w-11 h-11 rounded-full border-2 border-dashed border-slate-300 text-slate-400 font-semibold text-xs flex items-center justify-center bg-slate-50/50"
+                      className="w-10 h-10 rounded-full border-2 border-dashed border-slate-200 text-slate-300 font-semibold text-xs flex items-center justify-center bg-white"
                     >
                       {stampNum}
                     </div>
@@ -309,14 +308,14 @@ export default function ShopScanPage() {
                 })}
               </div>
 
-              <p className="text-center text-xs font-medium text-slate-500">
-                You're <strong className="text-[#a80713]">{visitsLeft} stamps</strong> away from{" "}
-                <span className="font-semibold text-slate-700">{offer.title}</span>
+              <p className="text-center text-xs text-slate-500 font-medium pt-1">
+                You're <strong className="text-[#BA0C1E]">{visitsLeft} stamps</strong> away from{" "}
+                <strong className="text-slate-900">{offer.title}</strong>
               </p>
             </div>
 
             {/* 4. BUSINESS INFO SECTION */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 my-3">
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 my-3">
               <div className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase mb-2">
                 BUSINESS INFO
               </div>
@@ -329,7 +328,7 @@ export default function ShopScanPage() {
             {/* 5. INTERACTIVE SCRATCH CARD & CLAIM SECTION */}
             {createdClaim ? (
               <div className="my-4">
-                <div className="bg-emerald-950 text-white rounded-2xl p-3 mb-3 border border-emerald-800 flex items-center gap-2 text-xs font-semibold">
+                <div className="bg-emerald-950 text-white rounded-2xl p-3.5 mb-3 border border-emerald-800 flex items-center gap-2.5 text-xs font-semibold shadow-sm">
                   <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                   <span>Live Merchant Claim Active for {shop?.name}!</span>
                 </div>
@@ -338,7 +337,7 @@ export default function ShopScanPage() {
             ) : showEditForm ? (
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 my-3">
                 <div className="flex items-center gap-2 mb-3">
-                  <Gift className="w-5 h-5 text-[#a80713]" />
+                  <Gift className="w-5 h-5 text-[#BA0C1E]" />
                   <h3 className="text-sm font-bold text-slate-900">Scratch Card & Stamp Claim</h3>
                 </div>
 
@@ -361,7 +360,7 @@ export default function ShopScanPage() {
                       placeholder="e.g. Rahul Sharma"
                       required
                       minLength={2}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium text-xs outline-none focus:border-[#a80713] focus:ring-1 focus:ring-[#a80713]"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium text-xs outline-none focus:border-[#BA0C1E] focus:ring-1 focus:ring-[#BA0C1E]"
                     />
                   </div>
 
@@ -377,14 +376,14 @@ export default function ShopScanPage() {
                       required
                       pattern="[0-9]{10}"
                       maxLength={10}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium text-xs outline-none focus:border-[#a80713] focus:ring-1 focus:ring-[#a80713]"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium text-xs outline-none focus:border-[#BA0C1E] focus:ring-1 focus:ring-[#BA0C1E]"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3 bg-[#a80713] hover:bg-[#8c050f] text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-[#BA0C1E] hover:bg-[#9a0918] text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <>
@@ -404,16 +403,18 @@ export default function ShopScanPage() {
       </main>
 
       {/* 6. BOTTOM FLOATING NAVIGATION BAR */}
-      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-2xl rounded-full px-6 py-2 flex items-center gap-6 z-40">
-        <button className="text-slate-400 hover:text-slate-700 p-1" title="Home">
-          <Home className="w-5 h-5" />
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-2xl rounded-full px-6 py-2.5 flex items-center gap-6 z-40">
+        <button className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="HOME">
+          <Home className="w-4 h-4" />
+          <span className="text-[8px] font-bold uppercase tracking-wider">HOME</span>
         </button>
-        <button className="text-slate-400 hover:text-slate-700 p-1" title="Location">
-          <MapPin className="w-5 h-5" />
+        <button className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="EXPLORE">
+          <Compass className="w-4 h-4" />
+          <span className="text-[8px] font-bold uppercase tracking-wider">EXPLORE</span>
         </button>
         <button
-          className="w-11 h-11 bg-[#a80713] text-white rounded-full flex items-center justify-center shadow-lg shadow-rose-900/30 active:scale-95 transition-all -my-2"
-          title="Scan QR"
+          className="w-12 h-12 bg-[#BA0C1E] text-white rounded-full flex items-center justify-center shadow-lg shadow-rose-900/30 active:scale-95 transition-all -mt-5 border-4 border-[#f3f4f6]"
+          title="SCAN QR"
           onClick={() => {
             if (typeof window !== "undefined") {
               window.location.reload();
@@ -422,11 +423,13 @@ export default function ShopScanPage() {
         >
           <QrCode className="w-5 h-5" />
         </button>
-        <button className="text-slate-400 hover:text-slate-700 p-1" title="Rewards">
-          <Gift className="w-5 h-5" />
+        <button className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="REWARDS">
+          <Gift className="w-4 h-4" />
+          <span className="text-[8px] font-bold uppercase tracking-wider">REWARDS</span>
         </button>
-        <button className="text-slate-400 hover:text-slate-700 p-1" title="Profile">
-          <User className="w-5 h-5" />
+        <button className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="PROFILE">
+          <User className="w-4 h-4" />
+          <span className="text-[8px] font-bold uppercase tracking-wider">PROFILE</span>
         </button>
       </nav>
     </div>
