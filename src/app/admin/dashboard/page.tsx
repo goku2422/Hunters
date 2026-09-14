@@ -149,12 +149,20 @@ export default function AdminDashboardPage() {
     setQrDataUrl(null);
     setQrUrl(null);
     try {
-      const res = await fetch(`/api/admin/qr?shopId=${shop.id}`);
-      const data = await res.json();
-      if (data.success) {
-        setQrDataUrl(data.qrDataUrl);
-        setQrUrl(data.qrUrl);
-      }
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+      const shopSlug = shop.slug || shop.id;
+      const targetQrUrl = `${origin}/shop/${shopSlug}`;
+
+      const QRCode = (await import('qrcode')).default;
+      const dataUrl = await QRCode.toDataURL(targetQrUrl, {
+        width: 400,
+        margin: 2,
+        color: { dark: '#111827', light: '#FFFFFF' },
+        errorCorrectionLevel: 'H',
+      });
+
+      setQrDataUrl(dataUrl);
+      setQrUrl(targetQrUrl);
     } catch (err) {
       console.error('Error generating QR:', err);
     } finally {

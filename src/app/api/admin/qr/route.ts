@@ -3,6 +3,25 @@ import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 import QRCode from "qrcode";
 
+function resolveBaseUrl(req: NextRequest): string {
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const proto = req.headers.get("x-forwarded-proto") || (host?.includes("localhost") ? "http" : "https");
+  
+  if (host && !host.includes("localhost")) {
+    return `${proto}://${host}`;
+  }
+  
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL;
+  }
+  
+  return host ? `${proto}://${host}` : "http://localhost:3000";
+}
+
 // GET /api/admin/qr?shopId=xxx — generate QR code image for a shop
 export async function GET(req: NextRequest) {
   const token =
@@ -25,9 +44,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Shop not found" }, { status: 404 });
   }
 
-  const host = req.headers.get("host") || req.headers.get("x-forwarded-host");
-  const proto = req.headers.get("x-forwarded-proto") || "https";
-  const baseUrl = host ? `${proto}://${host}` : (process.env.NEXTAUTH_URL || "http://localhost:3000");
+  const baseUrl = resolveBaseUrl(req);
   const qrUrl = `${baseUrl}/shop/${shop.slug}`;
 
   try {
@@ -68,9 +85,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  const host = req.headers.get("host") || req.headers.get("x-forwarded-host");
-  const proto = req.headers.get("x-forwarded-proto") || "https";
-  const baseUrl = host ? `${proto}://${host}` : (process.env.NEXTAUTH_URL || "http://localhost:3000");
+  const baseUrl = resolveBaseUrl(req);
   const analytics = db.getShopAnalytics(baseUrl);
   return NextResponse.json({ success: true, analytics });
 }

@@ -16,8 +16,12 @@ export default function AcrylicStandPreview({
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   useEffect(() => {
+    let effectiveUrl = claimUrl;
+    if (typeof window !== 'undefined' && effectiveUrl.includes('localhost')) {
+      effectiveUrl = effectiveUrl.replace(/http:\/\/localhost:\d+/, window.location.origin);
+    }
     // Generate high resolution QR code data URL
-    QRCode.toDataURL(claimUrl, {
+    QRCode.toDataURL(effectiveUrl, {
       width: 400,
       margin: 2,
       color: {
