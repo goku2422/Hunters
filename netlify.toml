@@ -1,5 +1,4 @@
 ﻿[build]
-  base = ".gemini/antigravity/scratch/scratch-offer-system"
   command = "npm run build"
   publish = ".next"
 
