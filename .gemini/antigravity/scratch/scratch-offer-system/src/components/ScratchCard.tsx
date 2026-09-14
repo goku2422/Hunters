@@ -5,6 +5,8 @@ import confetti from 'canvas-confetti';
 import { Sparkles, CheckCircle2, XCircle, Clock, ShieldCheck } from 'lucide-react';
 import { Claim } from '@/types';
 
+import StampCardBadge from './StampCardBadge';
+
 interface ScratchCardProps {
   claim: Claim;
   onStatusUpdated?: (updatedClaim: Claim) => void;
@@ -12,6 +14,9 @@ interface ScratchCardProps {
 
 export default function ScratchCard({ claim: initialClaim, onStatusUpdated }: ScratchCardProps) {
   const [claim, setClaim] = useState<Claim>(initialClaim);
+  const [stampCount, setStampCount] = useState<number>(1);
+  const [targetStamps, setTargetStamps] = useState<number>(5);
+  const [xpEarned, setXpEarned] = useState<number>(10);
   const [isRevealed, setIsRevealed] = useState(initialClaim.scratchRevealed);
   const [scratchPercent, setScratchPercent] = useState(initialClaim.scratchRevealed ? 100 : 0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -31,6 +36,10 @@ export default function ScratchCard({ claim: initialClaim, onStatusUpdated }: Sc
         const res = await fetch(`/api/claims/${claim.id}`);
         const data = await res.json();
         if (data.success && data.claim) {
+          if (data.stampCount) setStampCount(data.stampCount);
+          if (data.targetStamps) setTargetStamps(data.targetStamps);
+          if (data.xpEarned) setXpEarned(data.xpEarned);
+
           if (data.claim.status !== claim.status) {
             setClaim(data.claim);
             if (onStatusUpdated) onStatusUpdated(data.claim);
@@ -216,6 +225,16 @@ export default function ScratchCard({ claim: initialClaim, onStatusUpdated }: Sc
 
   return (
     <div className="w-full max-w-md mx-auto">
+      {/* Loyalty Stamp Collected Badge Header */}
+      {claim.status === 'ACCEPTED' && (
+        <StampCardBadge
+          stampCount={stampCount}
+          targetStamps={targetStamps}
+          shopName={claim.shopName}
+          xpEarned={xpEarned}
+        />
+      )}
+
       {/* Scratch Box Wrapper */}
       <div className="relative overflow-hidden rounded-3xl border-2 border-amber-400/40 bg-gradient-to-b from-amber-50 to-white p-5 shadow-xl shadow-amber-500/10">
         

@@ -651,10 +651,20 @@ class DatabaseStore {
       };
     });
   }
+
+  // --- LOYALTY STAMPS ---
+  public getCustomerStampCount(mobile: string, shopId: string): number {
+    const cleanMobile = mobile.replace(/[^0-9]/g, '').slice(-10);
+    const accepted = this.data.claims.filter(
+      (c) => c.customerMobile === cleanMobile && c.shopId === shopId && c.status === 'ACCEPTED'
+    );
+    return accepted.length;
+  }
 }
 
 // Global Singleton
 const globalForDb = globalThis as unknown as { dbStore?: DatabaseStore };
 export const db = globalForDb.dbStore || new DatabaseStore();
 if (process.env.NODE_ENV !== 'production') globalForDb.dbStore = db;
+
 
