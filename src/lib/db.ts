@@ -36,8 +36,11 @@ interface DatabaseData {
 }
 
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'database.json');
+// In serverless environments (Netlify / Vercel), process.cwd() is read-only. Use /tmp for writable storage.
+const isServerless = Boolean(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_EXECUTION_ENV);
+const PRIMARY_DATA_DIR = isServerless ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
+const PRIMARY_DB_FILE = path.join(PRIMARY_DATA_DIR, 'database.json');
+const ROOT_SEED_FILE = path.join(process.cwd(), 'data', 'database.json');
 
 class DatabaseStore {
   private data: DatabaseData;
@@ -106,11 +109,15 @@ class DatabaseStore {
 
   private loadFromDisk() {
     try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
+      // 1. Try reading primary writable file
+      let targetFile = PRIMARY_DB_FILE;
+
+      if (!fs.existsSync(PRIMARY_DB_FILE) && fs.existsSync(ROOT_SEED_FILE)) {
+        targetFile = ROOT_SEED_FILE;
       }
-      if (fs.existsSync(DB_FILE)) {
-        const raw = fs.readFileSync(DB_FILE, 'utf-8');
+
+      if (fs.existsSync(targetFile)) {
+        const raw = fs.readFileSync(targetFile, 'utf-8');
         const parsed = JSON.parse(raw) as Partial<DatabaseData>;
         this.data = {
           admins: parsed.admins?.length ? parsed.admins : this.data.admins,
@@ -122,8 +129,6 @@ class DatabaseStore {
           claims: parsed.claims ?? this.data.claims,
           qrScans: parsed.qrScans ?? [],
         };
-      } else {
-        this.saveToDisk();
       }
       this.isLoaded = true;
     } catch (err) {
@@ -131,15 +136,14 @@ class DatabaseStore {
     }
   }
 
-
   private saveToDisk() {
     try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
+      if (!fs.existsSync(PRIMARY_DATA_DIR)) {
+        fs.mkdirSync(PRIMARY_DATA_DIR, { recursive: true });
       }
-      fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+      fs.writeFileSync(PRIMARY_DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
     } catch (err) {
-      console.error('Error saving database:', err);
+      console.error('Error saving database (safe fallback):', err);
     }
   }
 
