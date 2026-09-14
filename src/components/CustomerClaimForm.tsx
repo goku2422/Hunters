@@ -129,7 +129,7 @@ export default function CustomerClaimForm({
       if (!res.ok) {
         if (data.isDuplicate && data.existingClaim) {
           localStorage.setItem('drutoCustomer', JSON.stringify({ name: name.trim(), mobile: cleanMobile }));
-          router.push('/customer/dashboard');
+          router.push(`/shop/${resolvedShop.slug || resolvedShop.id || 'brew-and-bean'}`);
         } else {
           setErrorMsg(data.message || 'Failed to submit claim.');
         }
@@ -138,7 +138,7 @@ export default function CustomerClaimForm({
 
       if (data.success && data.claim) {
         localStorage.setItem('drutoCustomer', JSON.stringify({ name: name.trim(), mobile: cleanMobile }));
-        router.push('/customer/dashboard');
+        router.push(`/shop/${resolvedShop.slug || resolvedShop.id || 'brew-and-bean'}`);
       }
     } catch (err) {
       console.error('Claim submission error:', err);

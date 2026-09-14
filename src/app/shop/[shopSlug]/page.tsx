@@ -144,6 +144,9 @@ export default function ShopScanPage() {
         setName(savedName);
         setMobile(savedMobile);
         setIsLoggedIn(true);
+        if (data.shop?.id) {
+          createClaimForShop(savedName, savedMobile, data.shop.id);
+        }
       } else {
         setIsLoggedIn(false);
       }
@@ -152,7 +155,7 @@ export default function ShopScanPage() {
     } finally {
       setIsLoadingShop(false);
     }
-  }, [shopSlug]);
+  }, [shopSlug, createClaimForShop]);
 
   useEffect(() => {
     loadShop();
@@ -175,7 +178,7 @@ export default function ShopScanPage() {
     return () => clearInterval(interval);
   }, [shopSlug, mobile, isLoggedIn]);
 
-  // Handle Login Submission
+  // Handle Login Submission & Auto Card Collection Request
   const handleCustomerLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
@@ -197,15 +200,8 @@ export default function ShopScanPage() {
 
     setIsLoggedIn(true);
 
-    if (shopSlug) {
-      fetch(`/api/shop-by-slug?slug=${shopSlug}&mobile=${cleanMob}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.success && data.stampsCount !== undefined) {
-            setStampsCount(data.stampsCount);
-          }
-        })
-        .catch(() => {});
+    if (shop?.id) {
+      createClaimForShop(name.trim(), cleanMob, shop.id);
     }
   };
 
