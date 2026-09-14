@@ -7,6 +7,6 @@ interface ScanPageProps {
 }
 
 export default function MerchantScanRedirect({ params }: ScanPageProps) {
-  const merchantId = params?.merchantId || "pancake-house";
-  redirect(`/shop/${merchantId}`);
+  const merchantId = params?.merchantId || "brew-and-bean";
+  redirect(`/customer/dashboard?shop=${encodeURIComponent(merchantId)}`);
 }

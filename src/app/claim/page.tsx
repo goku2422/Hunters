@@ -13,12 +13,15 @@ export default function ClaimPage() {
         searchParams.get('shop') ||
         searchParams.get('merchant') ||
         searchParams.get('id') ||
-        searchParams.get('slug') ||
-        'brew-and-bean';
+        searchParams.get('slug');
 
-      router.replace(`/shop/${encodeURIComponent(targetShop)}`);
+      if (targetShop) {
+        router.replace(`/customer/dashboard?shop=${encodeURIComponent(targetShop)}`);
+      } else {
+        router.replace('/customer/dashboard');
+      }
     } else {
-      router.replace('/shop/brew-and-bean');
+      router.replace('/customer/dashboard');
     }
   }, [router]);
 
