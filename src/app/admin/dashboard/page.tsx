@@ -104,9 +104,12 @@ export default function AdminDashboardPage() {
       const shopsData = await shopsRes.json();
       if (shopsData.success) {
         setShops(shopsData.shops);
-        if (shopsData.shops.length > 0 && !merchantForm.shopId) {
-          setMerchantForm((prev) => ({ ...prev, shopId: shopsData.shops[0].id }));
-        }
+        setMerchantForm((prev) => {
+          if (!prev.shopId && shopsData.shops.length > 0) {
+            return { ...prev, shopId: shopsData.shops[0].id };
+          }
+          return prev;
+        });
       }
 
       // Fetch merchants
@@ -127,7 +130,7 @@ export default function AdminDashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [router, merchantForm.shopId]);
+  }, [router]);
 
   // Fetch shop analytics
   const fetchAnalytics = useCallback(async () => {
