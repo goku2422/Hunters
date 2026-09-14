@@ -8,7 +8,7 @@ import type { Claim } from '@/types';
 
 type Tab = 'home' | 'explore' | 'rewards' | 'profile' | 'scan' | 'card';
 type Customer = { name: string; mobile: string };
-type CustomerShop = { id: string; name: string; category: string; address: string; phone: string };
+type CustomerShop = { id: string; name: string; category: string; address: string; phone: string; slug?: string };
 
 export default function CustomerDashboardPage() {
     const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -60,8 +60,8 @@ export default function CustomerDashboardPage() {
             {activeTab === 'home' && <HomeHeader customerName={firstName} />}
 
             <section className="px-5 pt-6">
-                {activeTab === 'home' && <HomeView claims={activeClaims} shops={shops} loading={loading} onExplore={() => selectTab('explore')} onRewards={() => selectTab('rewards')} onScan={() => selectTab('scan')} onStartCard={(shop) => { setSelectedShop(shop); selectTab('card'); }} />}
-                {activeTab === 'explore' && <ExploreViewNew shops={shops} loading={loading} onStartCard={(shop) => { setSelectedShop(shop); selectTab('card'); }} />}
+                {activeTab === 'home' && <HomeView claims={activeClaims} shops={shops} loading={loading} onExplore={() => selectTab('explore')} onRewards={() => selectTab('rewards')} onScan={() => selectTab('scan')} onStartCard={(shop) => { window.location.href = `/shop/${shop.slug || shop.id || 'brew-and-bean'}`; }} />}
+                {activeTab === 'explore' && <ExploreViewNew shops={shops} loading={loading} onStartCard={(shop) => { window.location.href = `/shop/${shop.slug || shop.id || 'brew-and-bean'}`; }} />}
                 {activeTab === 'rewards' && <RewardsView claims={activeClaims} />}
                 {activeTab === 'profile' && <ProfileView customer={customer} onLogout={() => { window.localStorage.removeItem('drutoCustomer'); window.location.href = '/claim'; }} />}
                 {activeTab === 'scan' && <ScanView onBackHome={() => selectTab('home')} />}
@@ -123,7 +123,7 @@ function ScanView({ onBackHome }: { onBackHome: () => void }) {
 
     const submitManualId = (event: React.FormEvent) => {
         event.preventDefault();
-        if (restaurantId.trim()) window.location.href = `/claim?shop=${encodeURIComponent(restaurantId.trim())}`;
+        if (restaurantId.trim()) window.location.href = `/shop/${encodeURIComponent(restaurantId.trim())}`;
     };
 
     return <div className="min-h-[590px] px-2 pt-2 text-center"><h1 className="text-[30px] font-black tracking-[-0.04em]">Scan QR</h1><p className="mt-2 text-sm text-[#718096]">Point your camera at the QR code</p><div className="relative mx-auto mt-8 flex h-[385px] max-w-[385px] items-center justify-center overflow-hidden rounded-[24px] border-2 border-dashed border-[#ccd5df] bg-[#f0f1f1]">{cameraError ? <div className="px-8 text-center"><Camera className="mx-auto h-12 w-12 text-[#9aa7b8]" /><p className="mt-5 text-sm leading-5 text-[#667085]">Camera stream failed.<br />Please enter the code manually.</p></div> : <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />} {!cameraError && <div className="pointer-events-none absolute inset-10 rounded-3xl border-2 border-white/80 shadow-[0_0_0_999px_rgba(15,23,42,0.18)]" />}</div>{cameraError && <p className="mt-6 flex items-center justify-center gap-2 text-sm font-bold text-[#ff4b4b]"><AlertCircle className="h-4 w-4" /> Unable to access camera. Please enter the ID manually.</p>}<form onSubmit={submitManualId} className="mx-auto mt-4 flex max-w-[350px] gap-2"><input value={restaurantId} onChange={(event) => setRestaurantId(event.target.value)} placeholder="Enter Restaurant ID" className="min-w-0 flex-1 rounded-xl border-0 bg-white px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 focus:ring-[#b20d18]" /><button type="submit" className="rounded-xl bg-[#b20d18] px-5 py-3 text-sm font-bold text-white shadow-md hover:bg-[#970b14]">Submit</button></form><button type="button" onClick={onBackHome} className="mt-4 text-xs font-bold text-[#b20d18]">Back to Home</button></div>;
