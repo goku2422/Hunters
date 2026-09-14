@@ -186,6 +186,15 @@ export default function AdminDashboardPage() {
   const handleSaveShop = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!shopForm.name.trim()) {
+        alert('Please enter a valid shop name.');
+        return;
+      }
+      if (!shopForm.address.trim()) {
+        alert('Please enter a valid shop address.');
+        return;
+      }
+
       const isEditing = Boolean(editingShop?.id);
       const url = '/api/admin/shops';
       const method = isEditing ? 'PUT' : 'POST';
@@ -197,7 +206,9 @@ export default function AdminDashboardPage() {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
         setIsAddShopModalOpen(false);
         setEditingShop(null);
         setShopForm({
@@ -211,9 +222,13 @@ export default function AdminDashboardPage() {
           wifiIp: '',
         });
         await fetchAdminData();
+        alert(`Shop "${data.shop?.name}" created successfully!`);
+      } else {
+        alert(data.message || 'Error creating shop. Please check all fields.');
       }
     } catch (err) {
       console.error('Error saving shop:', err);
+      alert('Network error while saving shop.');
     }
   };
 

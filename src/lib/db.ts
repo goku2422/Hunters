@@ -156,6 +156,12 @@ class DatabaseStore {
         fs.mkdirSync(PRIMARY_DATA_DIR, { recursive: true });
       }
       fs.writeFileSync(PRIMARY_DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+
+      if (!isServerless && fs.existsSync(path.dirname(ROOT_SEED_FILE))) {
+        try {
+          fs.writeFileSync(ROOT_SEED_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+        } catch (e) {}
+      }
     } catch (err) {
       console.error('Error saving database (safe fallback):', err);
     }
