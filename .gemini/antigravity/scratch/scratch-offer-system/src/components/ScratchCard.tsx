@@ -255,8 +255,23 @@ export default function ScratchCard({ claim: initialClaim, onStatusUpdated }: Sc
             </div>
           </div>
 
-          {/* The Foil Canvas */}
-          {!isRevealed && (
+          {/* The Foil Canvas & Lock Overlay */}
+          {!isRevealed && claim.status === 'PENDING' && (
+            <div className="absolute inset-0 z-20 bg-gradient-to-br from-amber-600 via-amber-700 to-amber-800 flex flex-col items-center justify-center p-6 text-center shadow-lg">
+              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 animate-pulse">
+                <Clock className="w-6 h-6 text-yellow-200" />
+              </div>
+              <h4 className="text-base font-black text-white">Merchant Approval Pending</h4>
+              <p className="text-xs text-amber-100 mt-1 max-w-[230px]">
+                Upar shop counter par merchant aapki request verify kar raha hai. <strong>Accept hone ke baad scratch card unlock hoga!</strong>
+              </p>
+              <div className="mt-3 text-[11px] font-mono bg-black/20 text-amber-200 px-3 py-1 rounded-full border border-amber-400/30">
+                Code: {claim.claimCode}
+              </div>
+            </div>
+          )}
+
+          {!isRevealed && claim.status === 'ACCEPTED' && (
             <canvas
               ref={canvasRef}
               className="absolute inset-0 w-full h-full cursor-pointer touch-none z-10 transition-opacity duration-500"
@@ -265,9 +280,13 @@ export default function ScratchCard({ claim: initialClaim, onStatusUpdated }: Sc
         </div>
 
         {/* Scratch Guidance / Percentage */}
-        {!isRevealed ? (
+        {claim.status === 'PENDING' ? (
+          <div className="mt-3 text-center text-xs font-semibold text-amber-700 animate-pulse">
+            ⏳ Waiting for merchant to click &quot;Accept&quot;...
+          </div>
+        ) : !isRevealed ? (
           <div className="mt-3 flex items-center justify-between text-xs text-amber-800">
-            <span>Drag finger or mouse to scratch</span>
+            <span>✨ Ungli se rub / scratch karke offer reveal karo!</span>
             <span className="font-semibold">{scratchPercent}% scratched</span>
           </div>
         ) : (
