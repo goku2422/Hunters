@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   QrCode,
@@ -323,8 +324,18 @@ export default function ShopScanPage() {
   return (
     <div className="min-h-screen bg-[#f3f4f6] pb-28 text-slate-900 font-sans">
       {/* 1. TOP HEADER BANNER (Deep Red Matching Reference Design) */}
-      <header className="bg-[#BA0C1E] text-white pt-6 pb-6 px-6 rounded-b-[28px] shadow-md">
+      <header className="bg-[#BA0C1E] text-white pt-5 pb-6 px-6 rounded-b-[28px] shadow-md">
         <div className="max-w-md mx-auto">
+          {/* Back button matching reference screenshot */}
+          <div className="mb-3">
+            <Link
+              href="/customer/dashboard"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-white/90 hover:text-white transition-all"
+            >
+              ← Back
+            </Link>
+          </div>
+
           {/* Shop Avatar, Name & Customer Identity */}
           <div className="flex items-center justify-between gap-3 mb-5">
             <div className="flex items-center gap-3">
@@ -547,14 +558,14 @@ export default function ShopScanPage() {
 
       {/* 6. BOTTOM FLOATING NAVIGATION BAR */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-2xl rounded-full px-6 py-2.5 flex items-center gap-6 z-40">
-        <button className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="HOME">
+        <Link href="/customer/dashboard" className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="HOME">
           <Home className="w-4 h-4" />
           <span className="text-[8px] font-bold uppercase tracking-wider">HOME</span>
-        </button>
-        <button className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="EXPLORE">
+        </Link>
+        <Link href="/customer/dashboard" className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="EXPLORE">
           <Compass className="w-4 h-4" />
           <span className="text-[8px] font-bold uppercase tracking-wider">EXPLORE</span>
-        </button>
+        </Link>
         <button
           className="w-12 h-12 bg-[#BA0C1E] text-white rounded-full flex items-center justify-center shadow-lg shadow-rose-900/30 active:scale-95 transition-all -mt-5 border-4 border-[#f3f4f6]"
           title="SCAN QR"
@@ -566,14 +577,14 @@ export default function ShopScanPage() {
         >
           <QrCode className="w-5 h-5" />
         </button>
-        <button className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="REWARDS">
+        <Link href="/customer/dashboard" className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="REWARDS">
           <Gift className="w-4 h-4" />
           <span className="text-[8px] font-bold uppercase tracking-wider">REWARDS</span>
-        </button>
-        <button className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="PROFILE">
+        </Link>
+        <Link href="/customer/dashboard" className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-800" title="PROFILE">
           <User className="w-4 h-4" />
           <span className="text-[8px] font-bold uppercase tracking-wider">PROFILE</span>
-        </button>
+        </Link>
       </nav>
     </div>
   );
