@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const cleanSlug = slug?.trim().toLowerCase() || "";
   const shops = db.getShops();
 
-  // Find shop by slug, id, or normalized name; fallback to first active shop so customer never sees 404
+  // Find shop by slug, id, normalized name, or partial keyword match
   const shop =
     shops.find(
       (s) =>
@@ -17,7 +17,17 @@ export async function GET(req: NextRequest) {
         (s.slug?.toLowerCase() === cleanSlug ||
           s.id?.toLowerCase() === cleanSlug ||
           s.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === cleanSlug)
-    ) || shops.find((s) => s.isActive) || shops[0];
+    ) ||
+    shops.find(
+      (s) =>
+        s.isActive &&
+        cleanSlug &&
+        (s.slug?.toLowerCase().includes(cleanSlug) ||
+          cleanSlug.includes(s.slug?.toLowerCase() || "") ||
+          s.name?.toLowerCase().includes(cleanSlug))
+    ) ||
+    shops.find((s) => s.isActive) ||
+    shops[0];
 
   if (!shop) {
     return NextResponse.json({ success: false, message: "Shop not found" }, { status: 404 });

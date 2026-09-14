@@ -51,9 +51,10 @@ export default function ShopScanPage() {
 
   const [activeTab, setActiveTab] = useState<"rewards" | "menu">("rewards");
 
-  // Customer State
+  // Customer Login State
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdClaim, setCreatedClaim] = useState<Claim | null>(null);
@@ -86,6 +87,7 @@ export default function ShopScanPage() {
         if (typeof window !== "undefined") {
           localStorage.setItem("customer_name", custName);
           localStorage.setItem("customer_mobile", custMobile);
+          localStorage.setItem("drutoCustomer", JSON.stringify({ name: custName, mobile: custMobile }));
         }
         setCreatedClaim(data.claim);
       } catch (err) {
@@ -98,13 +100,26 @@ export default function ShopScanPage() {
     []
   );
 
-  // Load shop info by slug + log QR scan + auto-claim if saved
+  // Load shop info by slug + log QR scan + check login state
   const loadShop = useCallback(async () => {
     if (!shopSlug) return;
     try {
+      let savedName = "";
       let savedMobile = "";
       if (typeof window !== "undefined") {
+        savedName = localStorage.getItem("customer_name") || "";
         savedMobile = localStorage.getItem("customer_mobile") || "";
+        
+        if (!savedName || !savedMobile) {
+          const druto = localStorage.getItem("drutoCustomer");
+          if (druto) {
+            try {
+              const parsed = JSON.parse(druto);
+              if (parsed.name) savedName = parsed.name;
+              if (parsed.mobile) savedMobile = parsed.mobile;
+            } catch {}
+          }
+        }
       }
 
       const res = await fetch(`/api/shop-by-slug?slug=${shopSlug}&mobile=${savedMobile}`);
@@ -125,26 +140,27 @@ export default function ShopScanPage() {
         body: JSON.stringify({ shopId: data.shop.id }),
       }).catch(() => {});
 
-      // Populate saved customer details
-      if (typeof window !== "undefined") {
-        const savedName = localStorage.getItem("customer_name") || "";
+      if (savedName.trim() && savedMobile.trim().length === 10) {
         setName(savedName);
         setMobile(savedMobile);
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
       }
     } catch (err) {
       setShopError("Shop load karne mein error aaya.");
     } finally {
       setIsLoadingShop(false);
     }
-  }, [shopSlug, createClaimForShop]);
+  }, [shopSlug]);
 
   useEffect(() => {
     loadShop();
   }, [loadShop]);
 
-  // Poll for live stamp count updates every 2 seconds
+  // Poll for live stamp count updates every 2 seconds when logged in
   useEffect(() => {
-    if (!shopSlug || !mobile) return;
+    if (!shopSlug || !mobile || !isLoggedIn) return;
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/shop-by-slug?slug=${shopSlug}&mobile=${mobile}`);
@@ -157,13 +173,40 @@ export default function ShopScanPage() {
       }
     }, 2000);
     return () => clearInterval(interval);
-  }, [shopSlug, mobile]);
+  }, [shopSlug, mobile, isLoggedIn]);
 
-  // Handle Form Submit
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle Login Submission
+  const handleCustomerLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shop) return;
-    createClaimForShop(name, mobile, shop.id);
+    setSubmitError(null);
+    if (!name.trim() || name.trim().length < 2) {
+      setSubmitError("Please enter your full name (minimum 2 characters).");
+      return;
+    }
+    const cleanMob = mobile.replace(/[^0-9]/g, "");
+    if (cleanMob.length !== 10) {
+      setSubmitError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("customer_name", name.trim());
+      localStorage.setItem("customer_mobile", cleanMob);
+      localStorage.setItem("drutoCustomer", JSON.stringify({ name: name.trim(), mobile: cleanMob }));
+    }
+
+    setIsLoggedIn(true);
+
+    if (shopSlug) {
+      fetch(`/api/shop-by-slug?slug=${shopSlug}&mobile=${cleanMob}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success && data.stampsCount !== undefined) {
+            setStampsCount(data.stampsCount);
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   // Loading state
@@ -193,6 +236,91 @@ export default function ShopScanPage() {
     );
   }
 
+  // Customer Not Logged In -> Render Customer Login Card for THIS Merchant
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-5 font-sans">
+        <div className="max-w-md w-full mx-auto my-auto pt-4 pb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-14 h-14 bg-[#BA0C1E] text-white rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shadow-rose-900/40">
+              {shop?.name ? shop.name.charAt(0).toUpperCase() : "S"}
+            </div>
+            <div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 text-rose-300 text-[10px] font-bold border border-white/10 uppercase tracking-wider">
+                <Sparkles className="w-3 h-3 text-rose-400" />
+                Loyalty QR Scan
+              </span>
+              <h1 className="text-xl font-extrabold text-white mt-1 leading-tight">
+                {shop?.name || "Merchant Rewards"}
+              </h1>
+            </div>
+          </div>
+
+          <div className="bg-slate-900/90 rounded-3xl p-6 border border-slate-800 shadow-2xl space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-white">Customer Login</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Enter your details to view your 0-to-8 stamp card at <strong>{shop?.name}</strong>.
+              </p>
+            </div>
+
+            {submitError && (
+              <div className="p-3 bg-rose-500/20 border border-rose-500/40 rounded-xl text-xs text-rose-200 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{submitError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCustomerLogin} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Aapka Naam / Your Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  required
+                  minLength={2}
+                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white font-medium text-xs outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Mobile Number
+                </label>
+                <input
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/[^0-9]/g, "").slice(0, 10))}
+                  placeholder="10-digit mobile number"
+                  required
+                  maxLength={10}
+                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white font-medium text-xs outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 placeholder:text-slate-500"
+                />
+                <p className="mt-1 text-[10px] text-slate-400">No password required. Saves your rewards for {shop?.name}.</p>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 bg-[#BA0C1E] hover:bg-[#9a0918] text-white font-bold text-xs rounded-xl shadow-lg shadow-rose-900/50 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span>Continue to {shop?.name} Rewards</span>
+                <Sparkles className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div className="text-center text-[10px] text-slate-500 pb-2">
+          🔒 Connected to {shop?.name} ({shop?.category})
+        </div>
+      </div>
+    );
+  }
+
   const shopInitial = shop?.name ? shop.name.charAt(0).toUpperCase() : "S";
   const visitsLeft = Math.max(0, offer.visitsRequired - stampsCount);
 
@@ -201,12 +329,28 @@ export default function ShopScanPage() {
       {/* 1. TOP HEADER BANNER (Deep Red Matching Reference Design) */}
       <header className="bg-[#BA0C1E] text-white pt-6 pb-6 px-6 rounded-b-[28px] shadow-md">
         <div className="max-w-md mx-auto">
-          {/* Shop Avatar & Name */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 bg-white text-[#BA0C1E] font-black text-xl rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
-              {shopInitial}
+          {/* Shop Avatar, Name & Customer Identity */}
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white text-[#BA0C1E] font-black text-xl rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                {shopInitial}
+              </div>
+              <div>
+                <h1 className="text-base font-bold tracking-tight text-white">{shop?.name}</h1>
+                <p className="text-[10px] text-white/75 font-medium">{shop?.category}</p>
+              </div>
             </div>
-            <h1 className="text-base font-bold tracking-tight text-white">{shop?.name}</h1>
+            {name && (
+              <button
+                type="button"
+                onClick={() => setIsLoggedIn(false)}
+                className="text-[10px] font-bold bg-white/15 hover:bg-white/25 text-white px-2.5 py-1 rounded-full border border-white/20 transition-all flex items-center gap-1"
+                title="Click to switch account"
+              >
+                <User className="w-3 h-3 text-rose-200" />
+                <span>Hi, {name.split(" ")[0]}</span>
+              </button>
+            )}
           </div>
 
           {/* Stamp Summary Title */}
