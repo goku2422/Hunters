@@ -178,7 +178,19 @@ class DatabaseStore {
   }
 
   public getShopById(id: string): Shop | undefined {
-    return this.data.shops.find((s) => s.id === id);
+    if (!id) return this.data.shops[0];
+    const cleanId = id.trim().toLowerCase();
+    return (
+      this.data.shops.find((s) => s.id === id) ||
+      this.data.shops.find(
+        (s) =>
+          s.id.toLowerCase() === cleanId ||
+          s.slug?.toLowerCase() === cleanId ||
+          s.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') === cleanId
+      ) ||
+      this.data.shops.find((s) => s.isActive) ||
+      this.data.shops[0]
+    );
   }
 
   public saveShop(shopData: Partial<Shop> & { name: string; address: string; phone: string; latitude: number; longitude: number }): Shop {

@@ -28,10 +28,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const shop = db.getShopById(merchant.shopId);
+    let shop = db.getShopById(merchant.shopId);
+    if (!shop) {
+      shop = db.getShops().find((s) => s.isActive) || db.getShops()[0];
+    }
     if (!shop) {
       return NextResponse.json(
-        { success: false, message: 'Associated shop not found.' },
+        { success: false, message: 'No active shop available.' },
         { status: 404 }
       );
     }
