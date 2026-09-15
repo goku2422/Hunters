@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     shops[0] ||
     INITIAL_SHOPS[0];
 
-  const offer = db.getDefaultOffer();
+  const offer = db.getShopOffer(shop.id);
   const stampsCount = mobile ? db.getCustomerStampCount(mobile, shop.id) : 0;
 
   return NextResponse.json({
@@ -51,9 +51,10 @@ export async function GET(req: NextRequest) {
     },
     offer: {
       title: offer?.title || "Get 5% discount on your total bill after 8 visits",
-      discountPercent: offer?.discountPercent || 5,
-      visitsRequired: 8,
-      expiryDays: 30,
+      discountPercent: offer?.discountPercent || 15,
+      visitsRequired: offer?.visitsRequired || 8,
+      expiryDays: offer?.expiryDays || 30,
+      description: offer?.description || "",
     },
     stampsCount,
   });

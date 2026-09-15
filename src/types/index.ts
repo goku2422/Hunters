@@ -59,6 +59,8 @@ export interface Offer {
   description: string;
   terms: string;
   isActive: boolean;
+  visitsRequired?: number;
+  expiryDays?: number;
   createdAt: string;
 }
 
@@ -80,6 +82,9 @@ export interface Claim {
   customerLng?: number;
   distanceMeters?: number;
   rejectionReason?: string;
+  rewardCode?: string;
+  is8thStampReward?: boolean;
+  isRedeemed?: boolean;
   createdAt: string;
   resolvedAt?: string;
   resolvedBy?: string;

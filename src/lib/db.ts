@@ -385,6 +385,43 @@ class DatabaseStore {
     return this.data.offers[0] || INITIAL_OFFERS[0];
   }
 
+  public getShopOffer(shopId: string): Offer {
+    const found = this.data.offers.find((o) => o.id === shopId || o.id === `offer-${shopId}`);
+    if (found) return found;
+    const defaultOff = this.getDefaultOffer();
+    return {
+      ...defaultOff,
+      title: defaultOff.title || "Get 5% discount on your total bill after 8 visits",
+      visitsRequired: defaultOff.visitsRequired || 8,
+      expiryDays: defaultOff.expiryDays || 30,
+    };
+  }
+
+  public updateShopOffer(shopId: string, offerData: { title?: string; description?: string; visitsRequired?: number; expiryDays?: number }): Offer {
+    let offer = this.data.offers.find((o) => o.id === shopId || o.id === `offer-${shopId}`);
+    if (!offer) {
+      offer = {
+        id: `offer-${shopId}`,
+        title: offerData.title || 'Get 5% discount on your total bill after 8 visits',
+        discountPercent: 15,
+        description: offerData.description || 'Special reward for loyal customers.',
+        terms: 'Valid on single bill.',
+        isActive: true,
+        visitsRequired: offerData.visitsRequired || 8,
+        expiryDays: offerData.expiryDays || 30,
+        createdAt: new Date().toISOString(),
+      };
+      this.data.offers.push(offer);
+    } else {
+      if (offerData.title !== undefined) offer.title = offerData.title;
+      if (offerData.description !== undefined) offer.description = offerData.description;
+      if (offerData.visitsRequired !== undefined) offer.visitsRequired = offerData.visitsRequired;
+      if (offerData.expiryDays !== undefined) offer.expiryDays = offerData.expiryDays;
+    }
+    this.saveToDisk();
+    return offer;
+  }
+
   // --- CUSTOMERS ---
   public getCustomers(): Customer[] {
     return this.data.customers;
@@ -467,8 +504,11 @@ class DatabaseStore {
     if (!shop) throw new Error('Shop not found');
 
     const customer = this.findOrCreateCustomer(params.customerName, params.customerMobile);
-    const offer = this.getDefaultOffer();
+    const offer = this.getShopOffer(shop.id);
 
+    const currentStamps = this.getCustomerStampCount(params.customerMobile, shop.id);
+    const is8thStamp = currentStamps >= 7;
+    const rewardCode = `TREAT-${Math.floor(1000 + Math.random() * 9000)}`;
     const claimCode = `SCR-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const claim: Claim = {
@@ -488,6 +528,9 @@ class DatabaseStore {
       customerLat: params.customerLat,
       customerLng: params.customerLng,
       distanceMeters: params.distanceMeters,
+      is8thStampReward: is8thStamp,
+      rewardCode: rewardCode,
+      isRedeemed: false,
       createdAt: new Date().toISOString(),
     };
 
@@ -509,6 +552,19 @@ class DatabaseStore {
     claim.resolvedAt = new Date().toISOString();
     if (resolvedBy) claim.resolvedBy = resolvedBy;
     if (rejectionReason) claim.rejectionReason = rejectionReason;
+
+    this.saveToDisk();
+    return claim;
+  }
+
+  public markClaimRedeemed(claimId: string, resolvedBy?: string): Claim | undefined {
+    const claim = this.data.claims.find((c) => c.id === claimId);
+    if (!claim) return undefined;
+
+    claim.status = 'ACCEPTED';
+    claim.isRedeemed = true;
+    claim.resolvedAt = new Date().toISOString();
+    if (resolvedBy) claim.resolvedBy = resolvedBy;
 
     this.saveToDisk();
     return claim;

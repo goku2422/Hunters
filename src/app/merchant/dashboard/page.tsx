@@ -218,6 +218,52 @@ export default function MerchantDashboardPage() {
     }
   };
 
+  // Handle Redeem 8th Stamp Reward Request
+  const handleRedeem = async (claimId: string) => {
+    setActionInProgress(claimId);
+    try {
+      const res = await fetch(`/api/merchant/card-requests/${claimId}/redeem`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (res.ok) {
+        if (incomingClaimAlert?.id === claimId) {
+          setIncomingClaimAlert(null);
+        }
+        await fetchDashboardData();
+      }
+    } catch (err) {
+      console.error('Failed to redeem reward:', err);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  // Handle Save Offer Details
+  const handleSaveOffer = async () => {
+    try {
+      const res = await fetch('/api/merchant/offer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: offerTitle,
+          description: offerMessage,
+          visitsRequired: Number(visitsRequired),
+          expiryDays: Number(rewardExpiry),
+        }),
+      });
+
+      if (res.ok) {
+        setOfferSaved(true);
+        setTimeout(() => setOfferSaved(false), 4000);
+        await fetchDashboardData();
+      }
+    } catch (err) {
+      console.error('Failed to save reward offer:', err);
+    }
+  };
+
   // Logout
   const handleLogout = async () => {
     await fetch('/api/auth/merchant', { method: 'DELETE' });
@@ -342,14 +388,14 @@ export default function MerchantDashboardPage() {
             onOfferImageChange={setOfferImage}
             onVisitsRequiredChange={setVisitsRequired}
             onRewardExpiryChange={setRewardExpiry}
-            onSaveOffer={() => setOfferSaved(true)}
+            onSaveOffer={handleSaveOffer}
           />
         </div>
       )}
 
       {merchantView === 'settings' && <MerchantSettingsView shop={shop} merchant={merchant} remoteScanEnabled={remoteScanEnabled} onRemoteScanChange={setRemoteScanEnabled} saved={settingsSaved} onSave={() => setSettingsSaved(true)} />}
 
-      {merchantView === 'qr' && <MerchantHomeView shop={shop} claims={claims} onAccept={handleAccept} onReject={setRejectingClaim} />}
+      {merchantView === 'qr' && <MerchantHomeView shop={shop} claims={claims} onAccept={handleAccept} onRedeem={handleRedeem} onReject={setRejectingClaim} />}
 
       <div className="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full flex-1 space-y-6">
 
@@ -735,7 +781,7 @@ export default function MerchantDashboardPage() {
 
 type MerchantView = 'qr' | 'customers' | 'rewards' | 'marketing' | 'offer' | 'settings';
 
-function MerchantHomeView({ shop, claims, onAccept, onReject }: { shop: Shop | null; claims: Claim[]; onAccept: (claimId: string) => void; onReject: (claim: Claim) => void }) {
+function MerchantHomeView({ shop, claims, onAccept, onRedeem, onReject }: { shop: Shop | null; claims: Claim[]; onAccept: (claimId: string) => void; onRedeem?: (claimId: string) => void; onReject: (claim: Claim) => void }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const pendingClaims = claims.filter((claim) => claim.status === 'PENDING');
   const merchantSlug = shop?.slug || shop?.id || 'gourmet-pizza';
@@ -802,7 +848,60 @@ function MerchantHomeView({ shop, claims, onAccept, onReject }: { shop: Shop | n
       </div>
     </section>
 
-    <section className="px-4 pt-2 pb-8"><div className="flex items-center justify-between"><h2 className="text-sm font-bold">Pending Approvals</h2><span className="rounded-full bg-[#fff4d6] px-2 py-1 text-[10px] font-bold text-[#a66a00]">{pendingClaims.length} waiting</span></div><div className="mt-3 space-y-2">{pendingClaims.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center text-xs text-slate-500">No pending approvals. New customer scans will appear here.</div> : pendingClaims.slice(0, 3).map((claim) => <div key={claim.id} className="rounded-2xl border-2 border-[#e1a928] bg-white p-3 shadow-sm"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">{claim.customerName}</p><p className="mt-1 font-mono text-[10px] text-slate-500">+91 {claim.customerMobile}</p><p className="mt-1 text-[10px] text-slate-400">{new Date(claim.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p></div><div className="flex gap-2"><button type="button" aria-label={`Reject ${claim.customerName}`} onClick={() => onReject(claim)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-[#fff4d6] hover:text-[#a66a00]"><X className="h-4 w-4" /></button><button type="button" aria-label={`Approve ${claim.customerName}`} onClick={() => onAccept(claim.id)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2d9186] text-white hover:bg-[#23776e]"><Check className="h-4 w-4" /></button></div></div></div>)}</div></section>
+    <section className="px-4 pt-2 pb-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-bold">Pending Approvals &amp; Redemptions</h2>
+        <span className="rounded-full bg-[#fff4d6] px-2 py-1 text-[10px] font-bold text-[#a66a00]">{pendingClaims.length} waiting</span>
+      </div>
+      <div className="mt-3 space-y-2">
+        {pendingClaims.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center text-xs text-slate-500">
+            No pending approvals or redemptions. New customer scans will appear here.
+          </div>
+        ) : (
+          pendingClaims.slice(0, 5).map((claim) => {
+            const isReward = claim.is8thStampReward || Boolean(claim.rewardCode);
+            return (
+              <div key={claim.id} className={`rounded-2xl border-2 p-3 shadow-sm ${isReward ? 'border-amber-500 bg-amber-50/60' : 'border-[#e1a928] bg-white'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    {isReward && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-amber-500 px-2 py-0.5 text-[9px] font-black uppercase text-white mb-1">
+                        <Gift className="w-3 h-3" />
+                        8th Stamp Free Treat
+                      </span>
+                    )}
+                    <p className="text-sm font-bold text-slate-900">{claim.customerName}</p>
+                    <p className="mt-0.5 font-mono text-[10px] text-slate-500">+91 {claim.customerMobile}</p>
+                    {isReward && claim.rewardCode && (
+                      <p className="mt-1 font-mono text-xs font-black text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded w-fit border border-amber-300">
+                        Coupon: {claim.rewardCode}
+                      </p>
+                    )}
+                    <p className="mt-1 text-[10px] text-slate-400">{new Date(claim.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button type="button" aria-label={`Reject ${claim.customerName}`} onClick={() => onReject(claim)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-[#fff4d6] hover:text-[#a66a00]">
+                      <X className="h-4 w-4" />
+                    </button>
+                    {isReward ? (
+                      <button type="button" onClick={() => onRedeem ? onRedeem(claim.id) : onAccept(claim.id)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-600 text-white font-black text-xs hover:bg-amber-700 active:scale-95 transition-all shadow-md">
+                        <Check className="h-4 w-4" />
+                        <span>Mark as Redeemed</span>
+                      </button>
+                    ) : (
+                      <button type="button" aria-label={`Approve ${claim.customerName}`} onClick={() => onAccept(claim.id)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2d9186] text-white hover:bg-[#23776e]">
+                        <Check className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </section>
   </main>;
 }
 
