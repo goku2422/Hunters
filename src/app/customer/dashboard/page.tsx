@@ -19,14 +19,21 @@ export default function CustomerDashboardPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const savedCustomer = window.localStorage.getItem('drutoCustomer');
-        if (savedCustomer) {
-            try {
-                const parsed = JSON.parse(savedCustomer) as Partial<Customer>;
-                setCustomer({ name: parsed.name || 'Suraj', mobile: parsed.mobile || '' });
-            } catch {
-                window.localStorage.removeItem('drutoCustomer');
+        let name = window.localStorage.getItem('customer_name') || '';
+        let mobile = window.localStorage.getItem('customer_mobile') || '';
+        
+        if (!name || !mobile) {
+            const savedCustomer = window.localStorage.getItem('drutoCustomer');
+            if (savedCustomer) {
+                try {
+                    const parsed = JSON.parse(savedCustomer) as Partial<Customer>;
+                    if (parsed.name) name = parsed.name;
+                    if (parsed.mobile) mobile = parsed.mobile;
+                } catch {}
             }
+        }
+        if (mobile) {
+            setCustomer({ name: name || 'Customer', mobile });
         }
     }, []);
 
