@@ -1,5 +1,7 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+
+export const dynamic = 'force-dynamic';
 
 // POST /api/qr-scan — log a QR scan when customer lands on shop page
 export async function POST(req: NextRequest) {
