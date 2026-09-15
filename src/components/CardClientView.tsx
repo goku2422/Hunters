@@ -159,9 +159,6 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
         setName(savedName);
         setMobile(savedMobile);
         setIsLoggedIn(true);
-        if (targetShop.id) {
-          createClaimForShop(savedName, savedMobile, targetShop.id);
-        }
       } else {
         setIsLoggedIn(false);
       }
@@ -214,10 +211,6 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
     }
 
     setIsLoggedIn(true);
-
-    if (shop?.id) {
-      createClaimForShop(name.trim(), cleanMob, shop.id);
-    }
   };
 
   // Loading state
