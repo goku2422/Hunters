@@ -18,8 +18,8 @@ build/
 .gemini/oauth_creds.json
 .gemini/google_accounts.json
 
-# Local database (runtime data)
-**/data/database.json
+# Local database (runtime data - committed for Vercel seed)
+# **/data/database.json
 
 # Build artifacts
 tsconfig.tsbuildinfo

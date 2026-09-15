@@ -120,6 +120,7 @@ class DatabaseStore {
         } catch (err) {}
       }
       if (!rootData || !rootData.shops?.length) {
+        // Fallback to bundled seed JSON (always available at build time)
         rootData = seedDatabaseJson as unknown as Partial<DatabaseData>;
       }
 
@@ -190,8 +191,8 @@ class DatabaseStore {
     return this.data.shops;
   }
 
-  public getShopById(id: string): Shop | undefined {
-    if (!id) return this.data.shops[0];
+  public getShopById(id?: string): Shop | undefined {
+    if (!id || !id.trim()) return undefined;
     const cleanId = id.trim().toLowerCase();
     return (
       this.data.shops.find((s) => s.id === id) ||
@@ -200,9 +201,7 @@ class DatabaseStore {
           s.id.toLowerCase() === cleanId ||
           s.slug?.toLowerCase() === cleanId ||
           s.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') === cleanId
-      ) ||
-      this.data.shops.find((s) => s.isActive) ||
-      this.data.shops[0]
+      )
     );
   }
 
@@ -678,16 +677,6 @@ class DatabaseStore {
           message: `Paired with Live Cashier Terminal at ${activeShop.name}`,
         };
       }
-    }
-
-    // Default fallback to first active shop so customer is never blocked
-    if (activeShops.length > 0) {
-      return {
-        success: true,
-        shop: activeShops[0],
-        method: 'COUNTER_SESSION',
-        message: `Connected to nearest partner shop: ${activeShops[0].name}`,
-      };
     }
 
     return {

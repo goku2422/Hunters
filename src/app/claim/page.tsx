@@ -18,16 +18,16 @@ export default function ClaimPage() {
       if (targetShop) {
         router.replace(`/card/${encodeURIComponent(targetShop)}`);
       } else {
-        router.replace('/card/brew-and-bean');
+        router.replace('/customer/dashboard');
       }
     } else {
-      router.replace('/card/brew-and-bean');
+      router.replace('/customer/dashboard');
     }
   }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-      <p className="text-sm text-slate-500 font-medium">Opening Brew & Bean Cafe Shop Dashboard...</p>
+      <p className="text-sm text-slate-500 font-medium">Opening Customer Dashboard...</p>
     </div>
   );
 }

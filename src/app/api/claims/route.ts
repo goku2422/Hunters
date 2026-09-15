@@ -31,17 +31,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!body.shopId) {
+    if (!body.shopId || typeof body.shopId !== 'string' || !body.shopId.trim()) {
       return NextResponse.json(
-        { success: false, message: 'No shop context found. Please ensure location is enabled.' },
+        { success: false, message: 'Merchant ID is required before creating an approval request. Please scan a merchant QR code.' },
         { status: 400 }
       );
     }
 
-    const shop = db.getShopById(body.shopId);
+    const shop = db.getShopById(body.shopId.trim());
     if (!shop) {
       return NextResponse.json(
-        { success: false, message: 'Invalid shop identification.' },
+        { success: false, message: 'Invalid shop or merchant identification. Please scan a valid merchant QR code.' },
         { status: 404 }
       );
     }

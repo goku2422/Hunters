@@ -10,6 +10,13 @@ export async function GET(req: NextRequest) {
   const mobile = searchParams.get("mobile");
 
   const cleanSlug = slug?.trim().toLowerCase() || "";
+  if (!cleanSlug) {
+    return NextResponse.json(
+      { success: false, message: "Shop slug parameter is required." },
+      { status: 400 }
+    );
+  }
+
   let shops = db.getShops();
   if (!shops || shops.length === 0) {
     shops = INITIAL_SHOPS;
@@ -31,10 +38,14 @@ export async function GET(req: NextRequest) {
         s.slug?.toLowerCase() === cleanSlug ||
         s.id?.toLowerCase() === cleanSlug ||
         (cleanSlug && s.name?.toLowerCase().includes(cleanSlug))
-    ) ||
-    shops.find((s) => s.isActive) ||
-    shops[0] ||
-    INITIAL_SHOPS[0];
+    );
+
+  if (!shop) {
+    return NextResponse.json(
+      { success: false, message: "Shop not found." },
+      { status: 404 }
+    );
+  }
 
   const offer = db.getShopOffer(shop.id);
   const stampsCount = mobile ? db.getCustomerStampCount(mobile, shop.id) : 0;

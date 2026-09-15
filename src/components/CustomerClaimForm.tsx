@@ -104,8 +104,8 @@ export default function CustomerClaimForm({
       return;
     }
 
-    if (!resolvedShop) {
-      setErrorMsg('No shop could be identified. Please ensure you are inside a partner shop.');
+    if (!resolvedShop || !resolvedShop.id) {
+      setErrorMsg('No merchant shop could be identified. Please scan a merchant QR code.');
       return;
     }
 

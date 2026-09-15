@@ -41,7 +41,7 @@ interface CardClientViewProps {
 
 export default function CardClientView({ shopSlug: initialSlug }: CardClientViewProps) {
   const params = useParams();
-  const shopSlug = initialSlug || (params?.shopSlug as string) || "brew-and-bean";
+  const shopSlug = initialSlug || (params?.shopSlug as string);
 
   const [shop, setShop] = useState<ShopInfo | null>(null);
   const [offer, setOffer] = useState<OfferInfo>({
@@ -69,6 +69,10 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
   // Auto-submit claim helper
   const createClaimForShop = useCallback(
     async (custName: string, custMobile: string, targetShopId: string) => {
+      if (!targetShopId) {
+        setSubmitError("Merchant ID missing. Please scan a merchant QR code.");
+        return;
+      }
       setIsSubmitting(true);
       setSubmitError(null);
       try {
@@ -107,7 +111,11 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
 
   // Load shop info by slug + log QR scan + check login state
   const loadShop = useCallback(async () => {
-    if (!shopSlug) return;
+    if (!shopSlug) {
+      setShopError("No merchant QR code scanned. Please scan a merchant QR code to view shop card.");
+      setIsLoadingShop(false);
+      return;
+    }
     try {
       let savedName = "";
       let savedMobile = "";
@@ -127,34 +135,23 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
         }
       }
 
-      let targetShop: ShopInfo = {
-        id: "shop-brew",
-        name: "Brew & Bean Cafe",
-        category: "Cafe & Bakery",
-        address: "Block C, Inner Circle, Connaught Place, New Delhi",
-        slug: "brew-and-bean",
-      };
+      const res = await fetch(`/api/shop-by-slug?slug=${encodeURIComponent(shopSlug)}&mobile=${encodeURIComponent(savedMobile)}`);
+      const data = await res.json();
+      if (data.success && data.shop) {
+        setShop(data.shop);
+        if (data.offer) setOffer(data.offer);
+        if (data.stampsCount !== undefined) setStampsCount(data.stampsCount);
 
-      try {
-        const res = await fetch(`/api/shop-by-slug?slug=${encodeURIComponent(shopSlug)}&mobile=${encodeURIComponent(savedMobile)}`);
-        const data = await res.json();
-        if (data.success && data.shop) {
-          targetShop = data.shop;
-          if (data.offer) setOffer(data.offer);
-          if (data.stampsCount !== undefined) setStampsCount(data.stampsCount);
-        }
-      } catch (err) {
-        console.warn("Fallback to default shop on load error:", err);
+        // Log QR scan silently
+        fetch("/api/qr-scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shopId: data.shop.id }),
+        }).catch(() => {});
+      } else {
+        setShopError(data.message || "Merchant shop not found. Please scan a valid merchant QR code.");
+        setShop(null);
       }
-
-      setShop(targetShop);
-
-      // Log QR scan silently
-      fetch("/api/qr-scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shopId: targetShop.id }),
-      }).catch(() => {});
 
       if (savedName.trim() && savedMobile.trim().length === 10) {
         setName(savedName);
@@ -164,11 +161,12 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
         setIsLoggedIn(false);
       }
     } catch (err) {
-      console.warn("Silent catch on shop load:", err);
+      console.warn("Shop load error:", err);
+      setShopError("Failed to load merchant shop details.");
     } finally {
       setIsLoadingShop(false);
     }
-  }, [shopSlug, createClaimForShop]);
+  }, [shopSlug]);
 
   useEffect(() => {
     loadShop();
