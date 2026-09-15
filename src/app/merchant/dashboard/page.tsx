@@ -740,9 +740,8 @@ function MerchantHomeView({ shop, claims, onAccept, onReject }: { shop: Shop | n
   const pendingClaims = claims.filter((claim) => claim.status === 'PENDING');
 
   useEffect(() => {
-    if (!shop) return;
-    const claimUrl = `${window.location.origin}/shop/${shop.slug || shop.id}`;
-    QRCode.toDataURL(claimUrl, { width: 180, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
+    const claimUrl = `${window.location.origin}/customer/dashboard${shop ? `?shop=${shop.slug || shop.id}` : ''}`;
+    QRCode.toDataURL(claimUrl, { width: 260, margin: 1, color: { dark: '#142033', light: '#ffffff' } })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(''));
   }, [shop]);
@@ -755,7 +754,29 @@ function MerchantHomeView({ shop, claims, onAccept, onReject }: { shop: Shop | n
 
     <section className="px-4 pt-5"><div className="flex items-center justify-between"><h2 className="text-sm font-bold">Pending Approvals</h2><span className="rounded-full bg-[#fff4d6] px-2 py-1 text-[10px] font-bold text-[#a66a00]">{pendingClaims.length} waiting</span></div><div className="mt-3 space-y-2">{pendingClaims.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center text-xs text-slate-500">No pending approvals. New customer scans will appear here.</div> : pendingClaims.slice(0, 3).map((claim) => <div key={claim.id} className="rounded-2xl border-2 border-[#e1a928] bg-white p-3 shadow-sm"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">{claim.customerName}</p><p className="mt-1 font-mono text-[10px] text-slate-500">+91 {claim.customerMobile}</p><p className="mt-1 text-[10px] text-slate-400">{new Date(claim.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p></div><div className="flex gap-2"><button type="button" aria-label={`Reject ${claim.customerName}`} onClick={() => onReject(claim)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-[#fff4d6] hover:text-[#a66a00]"><X className="h-4 w-4" /></button><button type="button" aria-label={`Approve ${claim.customerName}`} onClick={() => onAccept(claim.id)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2d9186] text-white hover:bg-[#23776e]"><Check className="h-4 w-4" /></button></div></div></div>)}</div></section>
 
-    <section className="px-4 pt-7 text-center"><h2 className="text-sm font-bold text-slate-900">Your QR Code</h2>{qrDataUrl ? <img src={qrDataUrl} alt="Customer scan QR code" className="mx-auto mt-4 h-44 w-44 rounded-xl bg-white p-2 shadow-sm ring-4 ring-[#dcefeb]" /> : <div className="mx-auto mt-4 h-44 w-44 animate-pulse rounded-xl bg-slate-200" />}<p className="mt-3 text-[10px] text-slate-500">Display at your counter for customers to scan</p><p className="mt-1 text-[10px] font-semibold text-[#1f7775]">{shop?.name || 'Your store'} rewards QR</p></section>
+    <section className="px-4 pt-7 text-center pb-8">
+      <h2 className="text-base font-bold text-slate-900">Your Counter QR Code</h2>
+      <p className="mt-1 text-xs font-mono font-semibold text-[#1f7775]">https://flinty-orcin.vercel.app/customer/dashboard</p>
+      {qrDataUrl ? (
+        <img src={qrDataUrl} alt="Customer scan QR code" className="mx-auto mt-4 h-52 w-52 rounded-2xl bg-white p-3 shadow-md ring-4 ring-[#dcefeb]" />
+      ) : (
+        <div className="mx-auto mt-4 h-52 w-52 animate-pulse rounded-2xl bg-slate-200" />
+      )}
+      <p className="mt-3 text-xs text-slate-500">Display this QR code at your counter for customers to scan and open the Customer Dashboard directly.</p>
+      <p className="mt-1 text-xs font-semibold text-[#1f7775]">{shop?.name || 'Your store'} Loyalty QR</p>
+      {qrDataUrl && (
+        <div className="mt-4">
+          <a
+            href={qrDataUrl}
+            download={`${shop?.slug || 'merchant'}-customer-dashboard-qr.png`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1f7775] text-white text-xs font-bold shadow-md hover:bg-[#185e5c] active:scale-95 transition-all"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download Counter QR Code</span>
+          </a>
+        </div>
+      )}
+    </section>
   </main>;
 }
 
