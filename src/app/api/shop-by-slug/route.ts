@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { INITIAL_SHOPS } from "@/lib/seed";
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +10,10 @@ export async function GET(req: NextRequest) {
   const mobile = searchParams.get("mobile");
 
   const cleanSlug = slug?.trim().toLowerCase() || "";
-  const shops = db.getShops();
+  let shops = db.getShops();
+  if (!shops || shops.length === 0) {
+    shops = INITIAL_SHOPS;
+  }
 
   // Find shop by slug, id, normalized name, or partial keyword match
   const shop =
@@ -18,22 +22,19 @@ export async function GET(req: NextRequest) {
         s.isActive &&
         (s.slug?.toLowerCase() === cleanSlug ||
           s.id?.toLowerCase() === cleanSlug ||
-          s.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === cleanSlug)
+          s.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === cleanSlug ||
+          (cleanSlug && s.slug?.toLowerCase().includes(cleanSlug)) ||
+          (cleanSlug && cleanSlug.includes(s.slug?.toLowerCase() || "")))
     ) ||
     shops.find(
       (s) =>
-        s.isActive &&
-        cleanSlug &&
-        (s.slug?.toLowerCase().includes(cleanSlug) ||
-          cleanSlug.includes(s.slug?.toLowerCase() || "") ||
-          s.name?.toLowerCase().includes(cleanSlug))
+        s.slug?.toLowerCase() === cleanSlug ||
+        s.id?.toLowerCase() === cleanSlug ||
+        (cleanSlug && s.name?.toLowerCase().includes(cleanSlug))
     ) ||
     shops.find((s) => s.isActive) ||
-    shops[0];
-
-  if (!shop) {
-    return NextResponse.json({ success: false, message: "Shop not found" }, { status: 404 });
-  }
+    shops[0] ||
+    INITIAL_SHOPS[0];
 
   const offer = db.getDefaultOffer();
   const stampsCount = mobile ? db.getCustomerStampCount(mobile, shop.id) : 0;
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
       category: shop.category,
       address: shop.address,
       phone: shop.phone,
-      slug: shop.slug,
+      slug: shop.slug || "brew-and-bean",
     },
     offer: {
       title: offer?.title || "Get 5% discount on your total bill after 8 visits",
