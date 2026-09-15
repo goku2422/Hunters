@@ -64,6 +64,7 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdClaim, setCreatedClaim] = useState<Claim | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Auto-submit claim helper
   const createClaimForShop = useCallback(
@@ -190,8 +191,8 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
     return () => clearInterval(interval);
   }, [shopSlug, mobile, isLoggedIn]);
 
-  // Handle Login Submission & Auto Card Collection Request
-  const handleCustomerLogin = (e: React.FormEvent) => {
+  // Handle Login Submission & Explicit Card Collection Request
+  const handleCustomerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
     if (!name.trim() || name.trim().length < 2) {
@@ -211,6 +212,11 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
     }
 
     setIsLoggedIn(true);
+    setShowLoginModal(false);
+
+    if (shop?.id) {
+      await createClaimForShop(name.trim(), cleanMob, shop.id);
+    }
   };
 
   // Loading state
@@ -447,10 +453,14 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
               <button
                 type="button"
                 onClick={() => {
-                  if (typeof window !== "undefined") {
-                    const savedName = localStorage.getItem("customer_name") || "Guest Customer";
-                    const savedMob = localStorage.getItem("customer_mobile") || "9876543210";
-                    if (shop?.id) createClaimForShop(savedName, savedMob, shop.id);
+                  const savedName = (typeof window !== "undefined" ? localStorage.getItem("customer_name") : "") || name;
+                  const savedMob = (typeof window !== "undefined" ? localStorage.getItem("customer_mobile") : "") || mobile;
+                  if (!savedMob || savedMob.trim().length !== 10 || !isLoggedIn) {
+                    setShowLoginModal(true);
+                    return;
+                  }
+                  if (shop?.id) {
+                    createClaimForShop(savedName || "Customer", savedMob, shop.id);
                   }
                 }}
                 disabled={isSubmitting}
@@ -493,6 +503,68 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
           </>
         )}
       </main>
+
+      {/* CUSTOMER LOGIN MODAL */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 text-left">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-rose-50 text-[#BA0C1E]">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Customer Details</h3>
+                  <p className="text-[11px] text-slate-500">Enter mobile number to claim stamp</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setShowLoginModal(false)} className="text-slate-400 hover:text-slate-600 text-sm font-bold">
+                ✕
+              </button>
+            </div>
+
+            {submitError && (
+              <div className="mb-3 p-2.5 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{submitError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCustomerLogin} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Your Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs outline-none focus:border-[#BA0C1E]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Mobile Number</label>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="10-digit mobile number"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono outline-none focus:border-[#BA0C1E]"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 bg-[#BA0C1E] hover:bg-[#960917] text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isSubmitting ? "Submitting..." : "Submit & Claim Stamp"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* 6. BOTTOM FLOATING NAVIGATION BAR */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-2xl rounded-full px-6 py-2.5 flex items-center gap-6 z-40">
