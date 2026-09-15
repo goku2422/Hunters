@@ -763,13 +763,13 @@ function MerchantHomeView({ shop, claims, onAccept, onReject }: { shop: Shop | n
         <h2 className="text-lg font-black text-slate-900">{shop?.name || 'Store'} Loyalty QR</h2>
         <p className="mt-1 text-xs font-mono font-bold text-[#1f7775] break-all">{shopPathUrl}</p>
 
-        {qrDataUrl ? (
-          <div className="my-5 flex justify-center">
-            <img src={qrDataUrl} alt={`${shop?.name} QR code`} className="h-56 w-56 rounded-2xl bg-white p-3 shadow-sm ring-4 ring-[#dcefeb]" />
-          </div>
-        ) : (
-          <div className="mx-auto my-5 h-56 w-56 animate-pulse rounded-2xl bg-slate-200" />
-        )}
+        <div className="my-5 flex justify-center">
+          <img
+            src={qrDataUrl || '/counter-qr.png'}
+            alt={`${shop?.name || 'Store'} QR code`}
+            className="h-56 w-56 rounded-2xl bg-white p-3 shadow-sm ring-4 ring-[#dcefeb] object-contain"
+          />
+        </div>
 
         <p className="text-xs text-slate-500 font-medium leading-relaxed">
           Iss QR code ko counter par display karein. Customer ise scan karke seedha <strong>{shop?.name}</strong> ka Stamp Card Dashboard khol kar stamp claim karenge.

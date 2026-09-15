@@ -84,17 +84,11 @@ export default function AcrylicStandPreview({
             {/* QR Code Container with High-Contrast Scanning Frame */}
             <div className="my-5 p-3.5 bg-slate-900 rounded-2xl shadow-xl border-2 border-amber-400">
               <div className="bg-white p-3 rounded-xl">
-                {qrDataUrl ? (
-                  <img
-                    src={qrDataUrl}
-                    alt="Common QR Code"
-                    className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
-                  />
-                ) : (
-                  <div className="w-48 h-48 flex items-center justify-center text-slate-400">
-                    <QrIcon className="w-12 h-12 animate-pulse" />
-                  </div>
-                )}
+                <img
+                  src={qrDataUrl || '/counter-qr.png'}
+                  alt="Common QR Code"
+                  className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
+                />
               </div>
             </div>
 
