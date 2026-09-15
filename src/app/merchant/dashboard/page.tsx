@@ -53,7 +53,7 @@ export default function MerchantDashboardPage() {
   // Active filter tab
   const [activeTab, setActiveTab] = useState<'PENDING' | 'ACCEPTED' | 'REJECTED' | 'ALL'>('PENDING');
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
-  const [merchantView, setMerchantView] = useState<'qr' | 'customers' | 'rewards' | 'marketing' | 'offer' | 'settings'>('qr');
+  const [merchantView, setMerchantView] = useState<'qr' | 'customers' | 'rewards' | 'offer' | 'settings'>('qr');
   const [remoteScanEnabled, setRemoteScanEnabled] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [offerTitle, setOfferTitle] = useState('');
@@ -779,7 +779,7 @@ export default function MerchantDashboardPage() {
   );
 }
 
-type MerchantView = 'qr' | 'customers' | 'rewards' | 'marketing' | 'offer' | 'settings';
+type MerchantView = 'qr' | 'customers' | 'rewards' | 'offer' | 'settings';
 
 function MerchantHomeView({ shop, claims, onAccept, onRedeem, onReject }: { shop: Shop | null; claims: Claim[]; onAccept: (claimId: string) => void; onRedeem?: (claimId: string) => void; onReject: (claim: Claim) => void }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
@@ -941,12 +941,31 @@ function MerchantBottomNav({ activeView, onSelect }: { activeView: MerchantView;
     { view: 'qr', label: 'QR Code', icon: <QrCode className="h-5 w-5" /> },
     { view: 'customers', label: 'Customers', icon: <Users className="h-5 w-5" /> },
     { view: 'rewards', label: 'Rewards', icon: <Percent className="h-5 w-5" /> },
-    { view: 'marketing', label: 'Marketing', icon: <Megaphone className="h-5 w-5" /> },
     { view: 'offer', label: 'Create Offer', icon: <PlusCircle className="h-5 w-5" /> },
     { view: 'settings', label: 'Profile', icon: <Settings className="h-5 w-5" /> },
   ];
 
-  return <nav className="sticky bottom-0 z-30 mx-auto mt-auto flex w-full max-w-7xl items-center justify-around border-t border-slate-200 bg-white px-2 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">{items.map((item) => <button key={item.view} type="button" onClick={() => onSelect(item.view)} className={`flex min-w-[62px] flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-semibold transition ${activeView === item.view ? 'text-[#1f7775]' : 'text-slate-400 hover:text-slate-700'}`}>{item.icon}<span>{item.label}</span></button>)}</nav>;
+  return (
+    <nav className="sticky bottom-0 z-30 w-full border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-2 py-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
+      <div className="mx-auto flex max-w-lg items-center justify-around overflow-x-auto no-scrollbar gap-1">
+        {items.map((item) => (
+          <button
+            key={item.view}
+            type="button"
+            onClick={() => onSelect(item.view)}
+            className={`flex flex-1 min-w-[60px] flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-semibold transition active:scale-95 ${
+              activeView === item.view
+                ? 'text-[#1f7775] font-extrabold bg-[#e3f1ef]/70'
+                : 'text-slate-400 hover:text-slate-700'
+            }`}
+          >
+            {item.icon}
+            <span className="whitespace-nowrap">{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
 }
 
 function MerchantFeaturePanel({
@@ -989,10 +1008,6 @@ function MerchantFeaturePanel({
   if (view === 'rewards') {
     const acceptedClaims = claims.filter((claim) => claim.status === 'ACCEPTED');
     return <FeatureShell title="Rewards" subtitle="Accepted customer rewards and redemptions"><div className="grid gap-4 sm:grid-cols-3"><Metric label="Rewards claimed" value={String(acceptedClaims.length)} /><Metric label="Discount rate" value="10%" /><Metric label="Repeat customers" value={String(new Set(acceptedClaims.map((claim) => claim.customerMobile)).size)} /></div><div className="mt-6"><EmptyMerchantPanel text={acceptedClaims.length ? 'Accepted rewards are reflected in the metrics above.' : 'No rewards have been accepted yet.'} /></div></FeatureShell>;
-  }
-
-  if (view === 'marketing') {
-    return <FeatureShell title="Marketing" subtitle="Bring customers back to your store"><div className="rounded-2xl border border-red-100 bg-red-50 p-5"><div className="flex items-center gap-3"><Megaphone className="h-6 w-6 text-red-700" /><div><h3 className="font-bold text-slate-900">Your QR campaign is live</h3><p className="mt-1 text-sm text-slate-600">Share your store QR code at the counter and invite customers to collect rewards.</p></div></div><button type="button" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/claim`)} className="mt-5 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800">Copy customer link</button></div></FeatureShell>;
   }
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
