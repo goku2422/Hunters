@@ -738,13 +738,14 @@ type MerchantView = 'qr' | 'customers' | 'rewards' | 'marketing' | 'offer' | 'se
 function MerchantHomeView({ shop, claims, onAccept, onReject }: { shop: Shop | null; claims: Claim[]; onAccept: (claimId: string) => void; onReject: (claim: Claim) => void }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const pendingClaims = claims.filter((claim) => claim.status === 'PENDING');
+  const merchantSlug = shop?.slug || shop?.id || 'gourmet-pizza';
+  const shopPathUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://flinty-orcin.vercel.app'}/shop/${merchantSlug}`;
 
   useEffect(() => {
-    const claimUrl = `${window.location.origin}/customer/dashboard${shop ? `?shop=${shop.slug || shop.id}` : ''}`;
-    QRCode.toDataURL(claimUrl, { width: 260, margin: 1, color: { dark: '#142033', light: '#ffffff' } })
+    QRCode.toDataURL(shopPathUrl, { width: 320, margin: 1, color: { dark: '#123c46', light: '#ffffff' } })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(''));
-  }, [shop]);
+  }, [shopPathUrl]);
 
   return <main className="min-h-[calc(100vh-60px)] bg-[#f3f7f6] pb-4 text-[#142033]">
     <section className="rounded-b-[26px] bg-gradient-to-br from-[#123c46] to-[#1f6970] px-5 pb-5 pt-7 text-white shadow-lg shadow-[#123c46]/20">
@@ -752,31 +753,56 @@ function MerchantHomeView({ shop, claims, onAccept, onReject }: { shop: Shop | n
       <div className="mt-5 grid grid-cols-3 gap-2"><div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center"><Clock className="mx-auto h-4 w-4" /><b className="mt-1 block text-lg leading-5">{pendingClaims.length}</b><span className="text-[8px] font-bold uppercase tracking-wider text-white/75">Pending</span></div><div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center"><Users className="mx-auto h-4 w-4" /><b className="mt-1 block text-lg leading-5">{claims.length}</b><span className="text-[8px] font-bold uppercase tracking-wider text-white/75">Customers</span></div><div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center"><QrCode className="mx-auto h-4 w-4" /><b className="mt-1 block text-lg leading-5">Live</b><span className="text-[8px] font-bold uppercase tracking-wider text-white/75">QR Status</span></div></div>
     </section>
 
-    <section className="px-4 pt-5"><div className="flex items-center justify-between"><h2 className="text-sm font-bold">Pending Approvals</h2><span className="rounded-full bg-[#fff4d6] px-2 py-1 text-[10px] font-bold text-[#a66a00]">{pendingClaims.length} waiting</span></div><div className="mt-3 space-y-2">{pendingClaims.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center text-xs text-slate-500">No pending approvals. New customer scans will appear here.</div> : pendingClaims.slice(0, 3).map((claim) => <div key={claim.id} className="rounded-2xl border-2 border-[#e1a928] bg-white p-3 shadow-sm"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">{claim.customerName}</p><p className="mt-1 font-mono text-[10px] text-slate-500">+91 {claim.customerMobile}</p><p className="mt-1 text-[10px] text-slate-400">{new Date(claim.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p></div><div className="flex gap-2"><button type="button" aria-label={`Reject ${claim.customerName}`} onClick={() => onReject(claim)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-[#fff4d6] hover:text-[#a66a00]"><X className="h-4 w-4" /></button><button type="button" aria-label={`Approve ${claim.customerName}`} onClick={() => onAccept(claim.id)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2d9186] text-white hover:bg-[#23776e]"><Check className="h-4 w-4" /></button></div></div></div>)}</div></section>
+    {/* Center Prominent Merchant Counter QR Section */}
+    <section className="px-4 pt-6 text-center pb-6">
+      <div className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow-md border border-slate-200/80">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e3f1ef] text-[#1f7775] text-[11px] font-extrabold uppercase tracking-wider mb-2">
+          <QrCode className="w-3.5 h-3.5" />
+          Counter QR Code Stand
+        </span>
+        <h2 className="text-lg font-black text-slate-900">{shop?.name || 'Store'} Loyalty QR</h2>
+        <p className="mt-1 text-xs font-mono font-bold text-[#1f7775] break-all">{shopPathUrl}</p>
 
-    <section className="px-4 pt-7 text-center pb-8">
-      <h2 className="text-base font-bold text-slate-900">Your Counter QR Code</h2>
-      <p className="mt-1 text-xs font-mono font-semibold text-[#1f7775]">https://flinty-orcin.vercel.app/customer/dashboard</p>
-      {qrDataUrl ? (
-        <img src={qrDataUrl} alt="Customer scan QR code" className="mx-auto mt-4 h-52 w-52 rounded-2xl bg-white p-3 shadow-md ring-4 ring-[#dcefeb]" />
-      ) : (
-        <div className="mx-auto mt-4 h-52 w-52 animate-pulse rounded-2xl bg-slate-200" />
-      )}
-      <p className="mt-3 text-xs text-slate-500">Display this QR code at your counter for customers to scan and open the Customer Dashboard directly.</p>
-      <p className="mt-1 text-xs font-semibold text-[#1f7775]">{shop?.name || 'Your store'} Loyalty QR</p>
-      {qrDataUrl && (
-        <div className="mt-4">
-          <a
-            href={qrDataUrl}
-            download={`${shop?.slug || 'merchant'}-customer-dashboard-qr.png`}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1f7775] text-white text-xs font-bold shadow-md hover:bg-[#185e5c] active:scale-95 transition-all"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download Counter QR Code</span>
-          </a>
-        </div>
-      )}
+        {qrDataUrl ? (
+          <div className="my-5 flex justify-center">
+            <img src={qrDataUrl} alt={`${shop?.name} QR code`} className="h-56 w-56 rounded-2xl bg-white p-3 shadow-sm ring-4 ring-[#dcefeb]" />
+          </div>
+        ) : (
+          <div className="mx-auto my-5 h-56 w-56 animate-pulse rounded-2xl bg-slate-200" />
+        )}
+
+        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+          Iss QR code ko counter par display karein. Customer ise scan karke seedha <strong>{shop?.name}</strong> ka Stamp Card Dashboard khol kar stamp claim karenge.
+        </p>
+
+        {qrDataUrl && (
+          <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-2">
+            <a
+              href={qrDataUrl}
+              download={`${merchantSlug}-counter-qr.png`}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#1f7775] text-white text-xs font-bold shadow-md hover:bg-[#185e5c] active:scale-95 transition-all"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Counter QR Code</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(shopPathUrl);
+                  alert('Copied link: ' + shopPathUrl);
+                }
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-all"
+            >
+              <span>Copy Direct Link</span>
+            </button>
+          </div>
+        )}
+      </div>
     </section>
+
+    <section className="px-4 pt-2 pb-8"><div className="flex items-center justify-between"><h2 className="text-sm font-bold">Pending Approvals</h2><span className="rounded-full bg-[#fff4d6] px-2 py-1 text-[10px] font-bold text-[#a66a00]">{pendingClaims.length} waiting</span></div><div className="mt-3 space-y-2">{pendingClaims.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center text-xs text-slate-500">No pending approvals. New customer scans will appear here.</div> : pendingClaims.slice(0, 3).map((claim) => <div key={claim.id} className="rounded-2xl border-2 border-[#e1a928] bg-white p-3 shadow-sm"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">{claim.customerName}</p><p className="mt-1 font-mono text-[10px] text-slate-500">+91 {claim.customerMobile}</p><p className="mt-1 text-[10px] text-slate-400">{new Date(claim.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p></div><div className="flex gap-2"><button type="button" aria-label={`Reject ${claim.customerName}`} onClick={() => onReject(claim)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-[#fff4d6] hover:text-[#a66a00]"><X className="h-4 w-4" /></button><button type="button" aria-label={`Approve ${claim.customerName}`} onClick={() => onAccept(claim.id)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2d9186] text-white hover:bg-[#23776e]"><Check className="h-4 w-4" /></button></div></div></div>)}</div></section>
   </main>;
 }
 
