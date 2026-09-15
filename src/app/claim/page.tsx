@@ -16,12 +16,12 @@ export default function ClaimPage() {
         searchParams.get('slug');
 
       if (targetShop) {
-        router.replace(`/shop/${encodeURIComponent(targetShop)}`);
+        router.replace(`/card/${encodeURIComponent(targetShop)}`);
       } else {
-        router.replace('/shop/brew-and-bean');
+        router.replace('/card/brew-and-bean');
       }
     } else {
-      router.replace('/shop/brew-and-bean');
+      router.replace('/card/brew-and-bean');
     }
   }, [router]);
 
