@@ -17,9 +17,6 @@ import {
     Store,
     Trophy,
     Zap,
-    User,
-    AlertCircle,
-    Loader2,
 } from 'lucide-react';
 
 const features = [
@@ -55,46 +52,7 @@ function PhoneMockup({ variant }: { variant: 'dashboard' | 'reward' | 'stamps' }
 }
 
 export default function HomePage() {
-    const router = useRouter();
     const [showLoginChoice, setShowLoginChoice] = useState(false);
-    const [showCustomerLogin, setShowCustomerLogin] = useState(false);
-    const [custName, setCustName] = useState('');
-    const [custMobile, setCustMobile] = useState('');
-    const [custError, setCustError] = useState('');
-    const [custLoading, setCustLoading] = useState(false);
-
-    const handleCustomerLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        setCustError('');
-        const trimmedName = custName.trim();
-        if (!trimmedName || trimmedName.length < 2) {
-            setCustError('Please enter your full name (at least 2 characters).');
-            return;
-        }
-        const cleanMobile = custMobile.replace(/[^0-9]/g, '');
-        if (cleanMobile.length !== 10) {
-            setCustError('Please enter a valid 10-digit mobile number.');
-            return;
-        }
-        setCustLoading(true);
-        localStorage.setItem('customer_name', trimmedName);
-        localStorage.setItem('customer_mobile', cleanMobile);
-        localStorage.setItem('drutoCustomer', JSON.stringify({ name: trimmedName, mobile: cleanMobile }));
-        router.push('/customer/dashboard');
-    };
-
-    const openCustomerLogin = () => {
-        try {
-            const saved = localStorage.getItem('drutoCustomer');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed.name && parsed.mobile) { router.push('/customer/dashboard'); return; }
-            }
-        } catch {}
-        setShowLoginChoice(false);
-        setCustName(''); setCustMobile(''); setCustError(''); setCustLoading(false);
-        setShowCustomerLogin(true);
-    };
 
     return (
         <main className="relative overflow-hidden bg-[#fbfbfb] text-[#101827]">
@@ -105,7 +63,7 @@ export default function HomePage() {
                     <p className="mx-auto mt-7 max-w-2xl text-base leading-7 text-[#6b7280] sm:text-lg">QR-based loyalty program for cafes, salons, gyms, restaurants &amp; more.<span className="block">Set up in 2 minutes, no app download needed.</span></p>
                     <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                         <button type="button" onClick={() => setShowLoginChoice(true)} className="inline-flex min-w-[198px] items-center justify-center gap-3 rounded-xl bg-[#b20d18] px-7 py-4 text-sm font-bold text-white shadow-lg shadow-[#b20d18]/20 transition hover:-translate-y-0.5 hover:bg-[#970b14]">Start Free Trial <ArrowRight className="h-4 w-4" /></button>
-                        <button type="button" onClick={openCustomerLogin} className="inline-flex min-w-[174px] items-center justify-center rounded-xl border border-[#e2e2e2] bg-white px-7 py-4 text-sm font-bold shadow-sm transition hover:-translate-y-0.5">I&apos;m a customer</button>
+                        <Link href="/customer/login" className="inline-flex min-w-[174px] items-center justify-center rounded-xl border border-[#e2e2e2] bg-white px-7 py-4 text-sm font-bold shadow-sm transition hover:-translate-y-0.5">I&apos;m a customer</Link>
                     </div>
                     <p className="mt-4 text-xs text-[#858585]">Already have a business? <Link href="/merchant/login" className="font-bold text-[#b20d18] hover:underline">Sign In</Link></p>
                     <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs text-[#929292]"><Check className="h-3.5 w-3.5 rounded-full bg-[#e9f5ed] p-0.5 text-[#398252]" /> 3-day free trial <span className="text-[#d1d1d1]">•</span> No payment required <span className="text-[#d1d1d1]">•</span> Cancel anytime</div>
@@ -144,60 +102,11 @@ export default function HomePage() {
                                 <span><span className="block font-bold">Business Login</span><span className="mt-1 block text-xs text-white/75">Manage your loyalty program and rewards</span></span>
                                 <ArrowRight className="h-5 w-5" />
                             </Link>
-                            <button type="button" onClick={openCustomerLogin} className="flex w-full items-center justify-between rounded-2xl border border-[#e2e2e2] px-5 py-4 text-left transition hover:border-[#b20d18] hover:bg-[#fff8f8]">
+                            <Link href="/customer/login" className="flex w-full items-center justify-between rounded-2xl border border-[#e2e2e2] px-5 py-4 text-left transition hover:border-[#b20d18] hover:bg-[#fff8f8]">
                                 <span><span className="block font-bold">Customer Login</span><span className="mt-1 block text-xs text-[#718096]">Scan, collect stamps, and claim rewards</span></span>
                                 <ArrowRight className="h-5 w-5 text-[#b20d18]" />
-                            </button>
+                            </Link>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Customer authentication modal */}
-            {showCustomerLogin && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#101827]/50 px-5 py-8" role="dialog" aria-modal="true" onClick={() => setShowCustomerLogin(false)}>
-                    <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-left shadow-2xl sm:p-8" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#fdf0f0] text-[#b20d18]"><User className="h-5 w-5" /></div>
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-[#b20d18]">Customer Login</p>
-                                    <h2 className="text-lg font-black text-[#101827]">Welcome!</h2>
-                                </div>
-                            </div>
-                            <button type="button" onClick={() => setShowCustomerLogin(false)} className="rounded-full p-2 text-[#718096] transition hover:bg-[#f7eeee] hover:text-[#b20d18]"><X className="h-5 w-5" /></button>
-                        </div>
-
-                        <p className="mt-3 text-sm text-[#718096]">Enter your name and mobile to view your stamp cards and rewards. No password or OTP needed.</p>
-
-                        {custError && (
-                            <div className="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-semibold text-rose-700">
-                                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" /><span>{custError}</span>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleCustomerLogin} className="mt-5 space-y-4">
-                            <div>
-                                <label htmlFor="cust-name" className="mb-1.5 block text-xs font-bold text-[#101827]">Your Full Name</label>
-                                <div className="relative">
-                                    <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca3af]" />
-                                    <input id="cust-name" type="text" value={custName} onChange={(e) => setCustName(e.target.value)} placeholder="e.g. Rahul Sharma" required autoFocus className="w-full rounded-xl border border-[#e5e7eb] bg-[#f9fafb] py-3 pl-10 pr-4 text-sm text-[#101827] outline-none transition focus:border-[#b20d18] focus:bg-white focus:ring-2 focus:ring-[#b20d18]/10" />
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="cust-mobile" className="mb-1.5 block text-xs font-bold text-[#101827]">Mobile Number</label>
-                                <div className="relative">
-                                    <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 select-none text-xs font-bold text-[#6b7280]">+91</span>
-                                    <input id="cust-mobile" type="tel" value={custMobile} onChange={(e) => setCustMobile(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))} placeholder="9876543210" maxLength={10} required className="w-full rounded-xl border border-[#e5e7eb] bg-[#f9fafb] py-3 pl-12 pr-4 font-mono text-sm text-[#101827] outline-none transition focus:border-[#b20d18] focus:bg-white focus:ring-2 focus:ring-[#b20d18]/10" />
-                                </div>
-                                <p className="mt-1 text-[11px] text-[#9ca3af]">Used to identify your stamps. No OTP or spam calls.</p>
-                            </div>
-                            <button type="submit" disabled={custLoading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b20d18] py-3.5 text-sm font-bold text-white shadow-md shadow-[#b20d18]/20 transition hover:bg-[#970b14] active:scale-95 disabled:opacity-60">
-                                {custLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Opening Dashboard...</> : <>Continue to Dashboard <ArrowRight className="h-4 w-4" /></>}
-                            </button>
-                        </form>
-
-                        <p className="mt-4 text-center text-xs text-[#9ca3af]">Are you a business? <Link href="/merchant/login" className="font-bold text-[#b20d18] hover:underline">Merchant Login →</Link></p>
                     </div>
                 </div>
             )}
