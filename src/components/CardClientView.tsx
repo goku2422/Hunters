@@ -367,8 +367,44 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
 
             {/* 3. STAMP CARD GRID */}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 my-3">
-              <div className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase mb-4">
-                STAMP CARD
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase">
+                  STAMP CARD
+                </div>
+                {isLoggedIn && stampsCount < (offer.visitsRequired || 8) && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!mobile || !shop?.id) return;
+                      setIsSubmitting(true);
+                      try {
+                        const res = await fetch("/api/demo/add-stamps", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            name: name || "Demo Customer",
+                            mobile,
+                            shopId: shop.id,
+                            targetStamps: offer.visitsRequired || 8,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (data.success && data.stampsCount !== undefined) {
+                          setStampsCount(data.stampsCount);
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full flex items-center gap-1 transition-all"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-600" />
+                    <span>⚡ Quick Test (8 Stamps)</span>
+                  </button>
+                )}
               </div>
 
               {/* 8 Circular Stamp Slots (0 to 8 stamps matching customer dashboard) */}
@@ -407,7 +443,11 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
               </div>
 
               <p className="text-center text-xs text-slate-500 font-medium pt-1 mb-4">
-                You're <strong className="text-[#80050F]">{visitsLeft} stamps</strong> away from your treat!
+                {stampsCount >= (offer.visitsRequired || 8) ? (
+                  <strong className="text-amber-600 font-black text-sm block">🎉 CONGRATULATIONS! YOU UNLOCKED YOUR FREE TREAT!</strong>
+                ) : (
+                  <>You're <strong className="text-[#80050F]">{visitsLeft} stamps</strong> away from your treat!</>
+                )}
               </p>
 
               {/* Claim Reward Pill Button matching reference image */}
@@ -421,10 +461,14 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
                   }
                 }}
                 disabled={isSubmitting}
-                className="w-full py-3.5 bg-[#80050F] hover:bg-[#68040C] text-white font-extrabold text-sm rounded-full shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                className={`w-full py-3.5 text-white font-extrabold text-sm rounded-full shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 ${
+                  stampsCount >= (offer.visitsRequired || 8)
+                    ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/30'
+                    : 'bg-[#80050F] hover:bg-[#68040C]'
+                }`}
               >
                 <Gift className="w-4 h-4" />
-                <span>Claim Reward</span>
+                <span>{stampsCount >= (offer.visitsRequired || 8) ? "Redeem 8th Stamp Free Treat" : "Claim Reward"}</span>
               </button>
             </div>
 
