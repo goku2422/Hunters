@@ -31,7 +31,7 @@ type CustomerShop = { id: string; name: string; category: string; address: strin
 
 export default function CustomerDashboardPage() {
     const [activeTab, setActiveTab] = useState<Tab>('home');
-    const [customer, setCustomer] = useState<Customer>({ name: 'Suraj', mobile: '' });
+    const [customer, setCustomer] = useState<Customer>({ name: 'Customer', mobile: '' });
     const [claims, setClaims] = useState<Claim[]>([]);
     const [shops, setShops] = useState<CustomerShop[]>([]);
     const [selectedShop, setSelectedShop] = useState<CustomerShop | null>(null);
@@ -82,10 +82,10 @@ export default function CustomerDashboardPage() {
     const selectTab = (tab: Tab) => setActiveTab(tab);
 
     return (
-        <main className="min-h-screen bg-[#f8f9f9] pb-28 text-[#142033]">
+        <main className="min-h-screen bg-[#0B0F17] pb-28 text-white selection:bg-purple-900 selection:text-purple-200">
             {activeTab === 'home' && <HomeHeader customerName={firstName} />}
 
-            <section className="px-5 pt-6">
+            <section className="px-5 pt-6 max-w-md mx-auto">
                 {activeTab === 'home' && <HomeView claims={activeClaims} shops={shops} loading={loading} onExplore={() => selectTab('explore')} onRewards={() => selectTab('rewards')} onScan={() => selectTab('scan')} onStartCard={(shop) => { window.location.href = `/card/${shop.slug || shop.id || 'brew-and-bean'}`; }} />}
                 {activeTab === 'explore' && <ExploreViewNew shops={shops} loading={loading} onStartCard={(shop) => { window.location.href = `/card/${shop.slug || shop.id || 'brew-and-bean'}`; }} />}
                 {activeTab === 'rewards' && <RewardsView claims={activeClaims} />}
@@ -100,11 +100,86 @@ export default function CustomerDashboardPage() {
 }
 
 function HomeHeader({ customerName }: { customerName: string }) {
-    return <section className="rounded-b-[28px] bg-gradient-to-br from-[#a80713] to-[#c71924] px-5 pb-7 pt-7 text-white shadow-lg shadow-red-900/10"><div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-xs font-black">Flinty</div><div><p className="text-[10px] font-bold uppercase tracking-wider text-white/75">Good afternoon,</p><h1 className="text-base font-black">{customerName}</h1></div></div><h2 className="mt-6 text-lg font-black">Collect stamps &amp; win rewards.</h2><p className="mt-1 text-sm text-white/80">Start a card below, or scan the QR at the counter.</p></section>;
+    return (
+        <section className="rounded-b-[32px] bg-gradient-to-br from-violet-900 via-purple-900 to-[#161D2F] px-5 pb-8 pt-8 text-white shadow-xl shadow-purple-950/30 border-b border-purple-500/30">
+            <div className="max-w-md mx-auto">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-purple-400/40 bg-gradient-to-tr from-violet-600 to-purple-500 text-white font-black text-sm shadow-md">
+                        F
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-purple-200/80">Welcome back,</p>
+                        <h1 className="text-lg font-black text-white">{customerName}</h1>
+                    </div>
+                </div>
+                <h2 className="mt-6 text-xl font-black text-white">Collect stamps &amp; win rewards.</h2>
+                <p className="mt-1 text-xs text-purple-200/80 font-medium">Start a card below, or scan the QR at the counter.</p>
+            </div>
+        </section>
+    );
 }
 
 function HomeView({ claims, shops, loading, onExplore, onRewards, onScan, onStartCard }: { claims: Claim[]; shops: CustomerShop[]; loading: boolean; onExplore: () => void; onRewards: () => void; onScan: () => void; onStartCard: (shop: CustomerShop) => void }) {
-    return <><button type="button" onClick={onScan} className="mt-5 flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-100 transition hover:ring-[#e8b5b5]"><span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fbe5e5] text-[#b20d18]"><ScanLine className="h-6 w-6" /></span><span><span className="block text-sm font-bold">At a shop right now?</span><span className="mt-1 block text-xs text-[#8390a2]">Scan the QR at the counter to collect your first stamp.</span></span><ChevronRight className="ml-auto h-5 w-5 text-[#b20d18]" /></button><div className="mt-7 flex items-center justify-between"><h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#718096]">Start a card</h2><button type="button" onClick={onExplore} className="text-xs font-bold text-[#b20d18]">See all</button></div><div className="mt-3 space-y-3">{loading ? <div className="rounded-2xl bg-white p-5 text-sm text-[#8390a2]">Loading cards...</div> : shops.slice(0, 4).map((shop) => <div key={shop.id} className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fbe5e5] text-lg font-bold text-[#b20d18]">{shop.name.charAt(0)}</div><div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold">{shop.name}</h3><p className="mt-1 text-xs font-semibold text-[#b20d18]">Collect Stamps → Win Rewards</p><p className="mt-1 truncate text-[11px] text-[#8390a2]">{shop.category}</p></div><button type="button" onClick={() => onStartCard(shop)} className="rounded-full border-2 border-[#b20d18] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#b20d18] transition hover:bg-[#b20d18] hover:text-white">Start</button></div>)}{!loading && shops.length === 0 && <EmptyState />}</div>{claims.length > 0 && <button type="button" onClick={onRewards} className="mt-5 flex w-full items-center justify-between rounded-2xl bg-[#fff8f8] p-4 text-left text-sm font-bold text-[#b20d18]">View your active rewards <ChevronRight className="h-5 w-5" /></button>}</>;
+    return (
+        <>
+            <button
+                type="button"
+                onClick={onScan}
+                className="mt-5 flex w-full items-center gap-4 rounded-2xl bg-[#161D2F] p-4 text-left shadow-lg border border-violet-500/30 transition hover:border-purple-500/50"
+            >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    <ScanLine className="h-6 w-6" />
+                </span>
+                <span>
+                    <span className="block text-sm font-bold text-white">At a shop right now?</span>
+                    <span className="mt-0.5 block text-xs text-slate-400">Scan the QR at the counter to collect your first stamp.</span>
+                </span>
+                <ChevronRight className="ml-auto h-5 w-5 text-purple-400" />
+            </button>
+
+            <div className="mt-7 flex items-center justify-between">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-purple-300/70">Start a card</h2>
+                <button type="button" onClick={onExplore} className="text-xs font-bold text-purple-400 hover:text-purple-300">See all</button>
+            </div>
+
+            <div className="mt-3 space-y-3">
+                {loading ? (
+                    <div className="rounded-2xl bg-[#161D2F] p-5 text-xs font-medium text-slate-400 border border-violet-500/20">Loading store cards...</div>
+                ) : (
+                    shops.slice(0, 4).map((shop) => (
+                        <div key={shop.id} className="flex items-center gap-3 rounded-2xl bg-[#161D2F] p-4 shadow-md border border-violet-500/20">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-purple-500 text-lg font-bold text-white shadow-sm">
+                                {shop.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <h3 className="truncate text-sm font-bold text-white">{shop.name}</h3>
+                                <p className="mt-0.5 text-xs font-semibold text-purple-300">Collect Stamps → Win Rewards</p>
+                                <p className="mt-0.5 truncate text-[11px] text-slate-400">{shop.category}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => onStartCard(shop)}
+                                className="rounded-full border border-purple-400/40 bg-purple-500/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-purple-300 hover:bg-gradient-to-r hover:from-violet-600 hover:to-purple-600 hover:text-white transition"
+                            >
+                                Start
+                            </button>
+                        </div>
+                    ))
+                )}
+                {!loading && shops.length === 0 && <EmptyState />}
+            </div>
+
+            {claims.length > 0 && (
+                <button
+                    type="button"
+                    onClick={onRewards}
+                    className="mt-5 flex w-full items-center justify-between rounded-2xl bg-purple-950/40 border border-purple-500/30 p-4 text-left text-sm font-bold text-purple-300"
+                >
+                    View your active rewards <ChevronRight className="h-5 w-5" />
+                </button>
+            )}
+        </>
+    );
 }
 
 function ExploreViewNew({ shops, loading, onStartCard }: { shops: CustomerShop[]; loading: boolean; onStartCard: (shop: CustomerShop) => void }) {
@@ -113,15 +188,110 @@ function ExploreViewNew({ shops, loading, onStartCard }: { shops: CustomerShop[]
     const categories = ['All', 'Bakery', 'Bar', 'Bookstore', 'Cafe', 'Clothing', 'Electronics', 'Grocery', 'Gym', 'Hotel'];
     const visibleShops = shops.filter((shop) => (category === 'All' || shop.category.toLowerCase().includes(category.toLowerCase())) && shop.name.toLowerCase().includes(query.toLowerCase()));
 
-    return <div className="-mx-5 -mt-6 min-h-[620px] bg-[#f6f7f8] pb-8"><section className="rounded-b-[28px] bg-gradient-to-br from-[#a80713] to-[#c71924] px-5 pb-8 pt-8 text-white"><h1 className="text-3xl font-black">Explore</h1><p className="mt-2 text-sm text-white/80">Find new favorites near you</p></section><button type="button" onClick={() => navigator.geolocation?.getCurrentPosition(() => alert('Location enabled for nearby businesses.'))} className="mx-4 -mt-4 flex w-[calc(100%-32px)] items-center justify-center gap-2 rounded-full border-2 border-slate-700 bg-white py-3 text-sm font-bold text-[#b20d18] shadow-sm"><Navigation className="h-4 w-4" /> Use my current location</button><div className="mx-4 mt-4 flex items-center gap-2 rounded-full bg-white px-4 py-3 shadow-sm"><Search className="h-5 w-5 text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find businesses near you" className="w-full text-sm outline-none placeholder:text-slate-400" /></div><div className="mt-4 flex gap-2 overflow-x-auto px-4 pb-1">{categories.map((item) => <button type="button" key={item} onClick={() => setCategory(item)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${category === item ? 'border-[#b20d18] bg-[#b20d18] text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{item}</button>)}</div><div className="mt-7 flex items-center justify-between px-4"><h2 className="text-base font-bold">Trending Near You</h2><button type="button" onClick={() => { setQuery(''); setCategory('All'); }} className="text-xs font-bold text-[#b20d18]">View all</button></div><div className="mt-4 space-y-3 px-4">{loading ? <div className="rounded-2xl bg-white p-5 text-sm text-slate-500">Loading businesses...</div> : visibleShops.map((shop) => <div key={shop.id} className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fbe5e5] text-lg">📦</div><div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold">{shop.name} <span className="text-[#b20d18]">✓</span></h3><p className="mt-1 text-xs text-[#b20d18]">Win: Loyalty reward</p></div><button type="button" onClick={() => onStartCard(shop)} className="text-xs font-bold uppercase tracking-wider text-emerald-500">Open</button></div>)}{!loading && visibleShops.length === 0 && <EmptyState />}</div></div>;
+    return (
+        <div className="-mx-5 -mt-6 min-h-[620px] bg-[#0B0F17] pb-8 text-white">
+            <section className="rounded-b-[32px] bg-gradient-to-br from-violet-900 via-purple-900 to-[#161D2F] px-5 pb-8 pt-8 text-white shadow-xl border-b border-purple-500/30">
+                <h1 className="text-3xl font-black">Explore</h1>
+                <p className="mt-1.5 text-xs text-purple-200/80 font-medium">Find new favorite stores near you</p>
+            </section>
+
+            <button
+                type="button"
+                onClick={() => navigator.geolocation?.getCurrentPosition(() => alert('Location enabled for nearby businesses.'))}
+                className="mx-4 -mt-4 flex w-[calc(100%-32px)] items-center justify-center gap-2 rounded-full border border-purple-400/40 bg-[#161D2F] py-3 text-xs font-bold text-purple-300 shadow-md hover:bg-[#1E2638]"
+            >
+                <Navigation className="h-4 w-4 text-purple-400" /> Use my current location
+            </button>
+
+            <div className="mx-4 mt-4 flex items-center gap-2 rounded-full bg-[#161D2F] border border-violet-500/30 px-4 py-3 shadow-sm">
+                <Search className="h-5 w-5 text-slate-400" />
+                <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Find businesses near you"
+                    className="w-full text-sm outline-none bg-transparent text-white placeholder:text-slate-500"
+                />
+            </div>
+
+            <div className="mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
+                {categories.map((item) => (
+                    <button
+                        type="button"
+                        key={item}
+                        onClick={() => setCategory(item)}
+                        className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold transition ${
+                            category === item
+                                ? 'border-purple-400/50 bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md'
+                                : 'border-violet-500/20 bg-[#161D2F] text-slate-300 hover:bg-[#1E2638]'
+                        }`}
+                    >
+                        {item}
+                    </button>
+                ))}
+            </div>
+
+            <div className="mt-7 flex items-center justify-between px-4">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-purple-300/80">Trending Near You</h2>
+                <button type="button" onClick={() => { setQuery(''); setCategory('All'); }} className="text-xs font-bold text-purple-400">View all</button>
+            </div>
+
+            <div className="mt-4 space-y-3 px-4">
+                {loading ? (
+                    <div className="rounded-2xl bg-[#161D2F] p-5 text-xs text-slate-400 border border-violet-500/20">Loading businesses...</div>
+                ) : (
+                    visibleShops.map((shop) => (
+                        <div key={shop.id} className="flex items-center gap-3 rounded-2xl bg-[#161D2F] p-4 shadow-md border border-violet-500/20">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 text-base">
+                                📦
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <h3 className="truncate text-sm font-bold text-white">{shop.name} <span className="text-purple-400">✓</span></h3>
+                                <p className="mt-0.5 text-xs text-purple-300 font-semibold">Win: Loyalty reward</p>
+                            </div>
+                            <button type="button" onClick={() => onStartCard(shop)} className="text-xs font-bold uppercase tracking-wider text-purple-400 hover:text-purple-300">Open</button>
+                        </div>
+                    ))
+                )}
+                {!loading && visibleShops.length === 0 && <EmptyState />}
+            </div>
+        </div>
+    );
 }
 
 function RewardsView({ claims }: { claims: Claim[] }) {
-    return <div><h2 className="text-base font-bold">All Rewards</h2><p className="mt-1 text-sm text-[#8390a2]">Your collected rewards and visits.</p><div className="mt-5 space-y-3">{claims.length === 0 ? <EmptyState /> : claims.map((claim) => <ClaimRow key={claim.id} claim={claim} />)}</div></div>;
+    return (
+        <div>
+            <h2 className="text-base font-bold text-white">All Rewards</h2>
+            <p className="mt-1 text-xs text-slate-400 font-medium">Your collected rewards and visits.</p>
+            <div className="mt-5 space-y-3">
+                {claims.length === 0 ? <EmptyState /> : claims.map((claim) => <ClaimRow key={claim.id} claim={claim} />)}
+            </div>
+        </div>
+    );
 }
 
 function ProfileView({ customer, onLogout }: { customer: Customer; onLogout: () => void }) {
-    return <div><h2 className="text-base font-bold">Profile</h2><div className="mt-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100"><div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fbe5e5] text-xl font-black text-[#b20d18]">{customer.name.charAt(0).toUpperCase()}</div><h3 className="mt-4 text-lg font-bold">{customer.name}</h3><p className="mt-1 flex items-center gap-2 text-sm text-[#718096]"><Phone className="h-4 w-4" /> +91 {customer.mobile || 'Not available'}</p></div><button type="button" onClick={onLogout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#f0caca] bg-white py-3 text-sm font-bold text-[#b20d18]"><LogOut className="h-4 w-4" /> Log out</button></div>;
+    return (
+        <div>
+            <h2 className="text-base font-bold text-white">Profile</h2>
+            <div className="mt-5 rounded-2xl bg-[#161D2F] p-5 shadow-lg border border-violet-500/30 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-purple-500 text-2xl font-black text-white shadow-md">
+                    {customer.name.charAt(0).toUpperCase()}
+                </div>
+                <h3 className="mt-4 text-lg font-bold text-white">{customer.name}</h3>
+                <p className="mt-1 flex items-center justify-center gap-2 text-xs font-mono text-slate-400">
+                    <Phone className="h-3.5 w-3.5 text-purple-400" /> +91 {customer.mobile || 'Not available'}
+                </p>
+            </div>
+            <button
+                type="button"
+                onClick={onLogout}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 py-3 text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition"
+            >
+                <LogOut className="h-4 w-4" /> Log out
+            </button>
+        </div>
+    );
 }
 
 function ScanView({ onBackHome }: { onBackHome: () => void }) {
@@ -196,7 +366,7 @@ function ScanView({ onBackHome }: { onBackHome: () => void }) {
                     () => {}
                 );
             } catch (envError) {
-                // Fallback to front camera or default camera (e.g. laptop webcam)
+                // Fallback to front camera or default camera
                 try {
                     await html5QrCode.start(
                         { facingMode: 'user' },
@@ -253,33 +423,33 @@ function ScanView({ onBackHome }: { onBackHome: () => void }) {
     };
 
     return (
-        <div className="min-h-[590px] px-2 pt-2 text-center">
-            <h1 className="text-[30px] font-black tracking-[-0.04em]">Scan QR</h1>
-            <p className="mt-2 text-sm text-[#718096]">Point your camera at the merchant QR code</p>
+        <div className="min-h-[590px] px-2 pt-2 text-center text-white">
+            <h1 className="text-2xl font-black tracking-tight">Scan Merchant QR</h1>
+            <p className="mt-1 text-xs text-slate-400 font-medium">Point your camera at the merchant QR code</p>
 
             {/* Scanner Container */}
-            <div className="relative mx-auto mt-6 flex min-h-[330px] max-w-[360px] flex-col items-center justify-center overflow-hidden rounded-[24px] border-2 border-dashed border-[#ccd5df] bg-[#f0f1f1]">
-                <div id="reader-container" className="h-full w-full overflow-hidden rounded-[22px]" />
+            <div className="relative mx-auto mt-6 flex min-h-[330px] max-w-[360px] flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-violet-500/40 bg-[#161D2F]">
+                <div id="reader-container" className="h-full w-full overflow-hidden rounded-2xl" />
 
                 {scannedResult && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-emerald-950/85 text-white p-4">
-                        <Check className="h-12 w-12 text-emerald-400" />
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-violet-950/90 text-white p-4">
+                        <Check className="h-12 w-12 text-purple-400" />
                         <p className="mt-2 text-base font-bold">QR Code Scanned!</p>
-                        <p className="mt-1 text-xs text-emerald-200">Opening merchant stamp card...</p>
+                        <p className="mt-1 text-xs text-purple-200">Opening merchant stamp card...</p>
                     </div>
                 )}
 
                 {cameraError && (
                     <div className="p-6 text-center">
-                        <Camera className="mx-auto h-12 w-12 text-[#9aa7b8]" />
-                        <p className="mt-4 text-sm font-bold text-[#101827]">Camera Stream Failed</p>
-                        <p className="mt-2 text-xs leading-5 text-[#667085]">
+                        <Camera className="mx-auto h-12 w-12 text-slate-500" />
+                        <p className="mt-4 text-sm font-bold text-white">Camera Stream Failed</p>
+                        <p className="mt-2 text-xs leading-5 text-slate-400">
                             {cameraErrorMessage || 'Unable to access camera. Please check permissions.'}
                         </p>
                         <button
                             type="button"
                             onClick={startScanner}
-                            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#b20d18] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#970b14]"
+                            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-md border border-purple-400/30"
                         >
                             <RefreshCw className="h-3.5 w-3.5" /> Retry Camera Access
                         </button>
@@ -288,7 +458,7 @@ function ScanView({ onBackHome }: { onBackHome: () => void }) {
             </div>
 
             {cameraError && (
-                <p className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-[#ff4b4b]">
+                <p className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-rose-400">
                     <AlertCircle className="h-4 w-4 shrink-0" /> Unable to access camera. Please enter the ID manually.
                 </p>
             )}
@@ -298,15 +468,15 @@ function ScanView({ onBackHome }: { onBackHome: () => void }) {
                 <input
                     value={restaurantId}
                     onChange={(event) => setRestaurantId(event.target.value)}
-                    placeholder="Enter Restaurant / Shop ID"
-                    className="min-w-0 flex-1 rounded-xl border-0 bg-white px-4 py-3 text-sm shadow-sm outline-none ring-1 ring-slate-200 focus:ring-[#b20d18]"
+                    placeholder="Enter Shop Slug / ID"
+                    className="min-w-0 flex-1 rounded-xl border border-violet-500/30 bg-[#161D2F] px-4 py-3 text-xs text-white shadow-sm outline-none focus:border-purple-500"
                 />
-                <button type="submit" className="rounded-xl bg-[#b20d18] px-5 py-3 text-sm font-bold text-white shadow-md hover:bg-[#970b14]">
+                <button type="submit" className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-5 py-3 text-xs font-bold text-white shadow-md border border-purple-400/30">
                     Submit
                 </button>
             </form>
 
-            <button type="button" onClick={onBackHome} className="mt-4 text-xs font-bold text-[#b20d18]">
+            <button type="button" onClick={onBackHome} className="mt-4 text-xs font-bold text-purple-400 hover:underline">
                 Back to Home
             </button>
         </div>
@@ -314,26 +484,80 @@ function ScanView({ onBackHome }: { onBackHome: () => void }) {
 }
 
 function StampCardView({ shop, onBackHome }: { shop: CustomerShop; onBackHome: () => void }) {
-    const [activeSection, setActiveSection] = useState<'rewards' | 'menu'>('rewards');
-    useEffect(() => {
-        const handleMenuClick = (event: MouseEvent) => {
-            const target = event.target as HTMLElement;
-            if (target.textContent?.trim() === '🍴 Menu') {
-                setActiveSection('menu');
-                window.alert(`${shop.name} Menu\n\nFresh Juice - Rs 120\nClassic Cold Coffee - Rs 160\nSignature Sandwich - Rs 220`);
-            }
-        };
-        document.addEventListener('click', handleMenuClick);
-        return () => document.removeEventListener('click', handleMenuClick);
-    }, [shop.name]);
-    return <div className="-mx-5 -mt-6 min-h-[620px] bg-[#f6f7f8] pb-10"><section className="rounded-b-[28px] bg-gradient-to-br from-[#a80713] to-[#c71924] px-5 pb-7 pt-7 text-white shadow-lg shadow-red-900/10"><button type="button" onClick={onBackHome} className="text-xs font-bold text-white/80">← Back</button><div className="mt-5 flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-lg font-black text-[#b20d18]">{shop.name.charAt(0)}</div><h1 className="text-lg font-black">{shop.name}</h1></div><p className="mt-8 text-3xl font-black">0 of 8 Stamps</p><div className="mt-7 h-2 rounded-full bg-white/25"><div className="h-full w-0 rounded-full bg-white" /></div></section><div className="mx-4 -mt-4 grid grid-cols-2 overflow-hidden rounded-full bg-white shadow-sm"><button type="button" className="rounded-full bg-[#a80713] py-3 text-sm font-bold text-white"><Gift className="mr-2 inline h-4 w-4" /> Rewards</button><button type="button" className="py-3 text-sm font-semibold text-slate-500">🍴 Menu</button></div><section className="mx-4 mt-6 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm"><div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#f8e6e6] text-2xl">🎁</div><div className="flex-1"><h2 className="text-sm font-bold">Get 5% discount on your total bill after 8 visits</h2><p className="mt-1 text-[10px] font-bold text-[#b20d18]">8 STAMPS <span className="font-normal text-slate-400">• Collect 8 more</span></p></div><span className="text-[10px] font-bold text-slate-700">30 DAY Expiry</span></section><section className="mx-4 mt-7 rounded-2xl bg-white p-5 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Stamp Card</p><div className="mt-5 flex justify-between gap-1">{Array.from({ length: 8 }, (_, index) => <div key={index} className={`flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-dashed text-lg font-bold ${index === 7 ? 'border-[#ff7777] bg-[#fff0f0] text-[#ff7777]' : 'border-[#d7dee8] text-[#e2e6ec]'}`}>{index === 7 ? <Gift className="h-5 w-5" /> : index + 1}</div>)}</div><p className="mt-6 text-center text-slate-500 text-sm">You&apos;re <span className="font-bold text-[#b20d18]">8 stamps</span> away from <span className="font-bold text-[#b20d18]">5% discount on your total bill after 8 visits</span></p></section><section className="mx-4 mt-7"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Business Info</p><div className="mt-3 rounded-2xl bg-white p-4 text-sm"><p className="font-bold">{shop.name}</p><p className="mt-1 text-xs text-slate-500">{shop.category}</p><p className="mt-3 flex items-center gap-2 text-xs text-slate-600"><MapPin className="h-4 w-4 text-[#b20d18]" /> {shop.address}</p></div></section></div>;
+    return (
+        <div className="-mx-5 -mt-6 min-h-[620px] bg-[#0B0F17] pb-10 text-white">
+            <section className="rounded-b-[32px] bg-gradient-to-br from-violet-900 via-purple-900 to-[#161D2F] px-5 pb-7 pt-7 text-white shadow-xl border-b border-purple-500/30">
+                <button type="button" onClick={onBackHome} className="text-xs font-bold text-purple-200">← Back</button>
+                <div className="mt-4 flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-lg font-black text-purple-700 shadow-md">
+                        {shop.name.charAt(0)}
+                    </div>
+                    <h1 className="text-lg font-black">{shop.name}</h1>
+                </div>
+            </section>
+        </div>
+    );
 }
 
 function ClaimRow({ claim }: { claim: Claim }) {
-    return <div className="w-full rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-100"><div className="flex items-center justify-between"><div><h3 className="text-sm font-bold">{claim.offerTitle}</h3><p className="mt-1 text-xs text-[#8390a2]">{claim.shopName}</p></div><span className="rounded-full bg-[#fff0f0] px-2.5 py-1 text-[10px] font-bold text-[#b20d18]">{claim.discountPercent}% OFF</span></div><p className="mt-3 text-xs text-[#667085]">Status: <span className="font-bold text-emerald-600">{claim.status}</span></p></div>;
+    return (
+        <div className="w-full rounded-2xl bg-[#161D2F] p-4 text-left shadow-md border border-violet-500/20">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-sm font-bold text-white">{claim.offerTitle}</h3>
+                    <p className="mt-0.5 text-xs text-slate-400">{claim.shopName}</p>
+                </div>
+                <span className="rounded-full bg-purple-500/10 px-2.5 py-1 text-[10px] font-bold text-purple-300 border border-purple-500/30">
+                    {claim.discountPercent}% OFF
+                </span>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">
+                Status: <span className="font-bold text-purple-400">{claim.status}</span>
+            </p>
+        </div>
+    );
 }
 
-function EmptyState() { return <div className="py-20 text-center"><div className="text-3xl">🎁</div><p className="mt-3 text-sm font-bold">No rewards yet</p><p className="mt-1 text-xs text-[#8390a2]">Scan a store QR code to begin.</p></div>; }
-function BottomNav({ activeTab, onSelect }: { activeTab: Tab; onSelect: (tab: Tab) => void }) { return <nav className="fixed bottom-4 left-1/2 z-30 flex h-[70px] w-[calc(100%-32px)] max-w-[385px] -translate-x-1/2 items-center justify-between rounded-full bg-white px-4 shadow-xl shadow-slate-300/40 ring-1 ring-slate-100"><NavButton icon={<Home className="h-5 w-5" />} label="Home" active={activeTab === 'home'} onClick={() => onSelect('home')} /><NavButton icon={<MapPin className="h-5 w-5" />} label="Explore" active={activeTab === 'explore'} onClick={() => onSelect('explore')} /><button type="button" aria-label="Scan QR code" onClick={() => onSelect('scan')} className="-mt-10 flex h-14 w-14 items-center justify-center rounded-full bg-[#b20d18] text-white shadow-lg shadow-red-900/30 ring-8 ring-[#f8f9f9]"><QrCode className="h-6 w-6" /></button><NavButton icon={<Gift className="h-5 w-5" />} label="Rewards" active={activeTab === 'rewards'} onClick={() => onSelect('rewards')} /><NavButton icon={<UserRound className="h-5 w-5" />} label="Profile" active={activeTab === 'profile'} onClick={() => onSelect('profile')} /></nav>; }
-function NavButton({ icon, label, active, onClick }: { icon: ReactNode; label: string; active: boolean; onClick: () => void }) { return <button type="button" onClick={onClick} className={`flex h-14 w-14 flex-col items-center justify-center rounded-lg ${active ? 'border-2 border-[#142033] text-[#b20d18]' : 'text-[#9aa4b4]'}`}>{icon}<span className="mt-1 text-[9px] font-bold uppercase">{label}</span></button>; }
+function EmptyState() {
+    return (
+        <div className="py-20 text-center text-slate-400">
+            <div className="text-3xl">🎁</div>
+            <p className="mt-3 text-sm font-bold text-white">No rewards yet</p>
+            <p className="mt-1 text-xs text-slate-400">Scan a store QR code to begin.</p>
+        </div>
+    );
+}
 
+function BottomNav({ activeTab, onSelect }: { activeTab: Tab; onSelect: (tab: Tab) => void }) {
+    return (
+        <nav className="fixed bottom-4 left-1/2 z-30 flex h-[70px] w-[calc(100%-32px)] max-w-[385px] -translate-x-1/2 items-center justify-between rounded-full bg-[#161D2F]/95 backdrop-blur-md px-4 shadow-2xl border border-violet-500/30">
+            <NavButton icon={<Home className="h-5 w-5" />} label="Home" active={activeTab === 'home'} onClick={() => onSelect('home')} />
+            <NavButton icon={<MapPin className="h-5 w-5" />} label="Explore" active={activeTab === 'explore'} onClick={() => onSelect('explore')} />
+            <button
+                type="button"
+                aria-label="Scan QR code"
+                onClick={() => onSelect('scan')}
+                className="-mt-10 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-xl shadow-purple-950/40 ring-8 ring-[#0B0F17] border border-purple-400/40 active:scale-95 transition"
+            >
+                <QrCode className="h-6 w-6" />
+            </button>
+            <NavButton icon={<Gift className="h-5 w-5" />} label="Rewards" active={activeTab === 'rewards'} onClick={() => onSelect('rewards')} />
+            <NavButton icon={<UserRound className="h-5 w-5" />} label="Profile" active={activeTab === 'profile'} onClick={() => onSelect('profile')} />
+        </nav>
+    );
+}
+
+function NavButton({ icon, label, active, onClick }: { icon: ReactNode; label: string; active: boolean; onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex h-14 w-14 flex-col items-center justify-center rounded-xl transition ${
+                active ? 'text-purple-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+        >
+            {icon}
+            <span className="mt-1 text-[9px] font-extrabold uppercase tracking-wider">{label}</span>
+        </button>
+    );
+}

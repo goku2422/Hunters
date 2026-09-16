@@ -355,26 +355,26 @@ export default function MerchantDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f3f7f6]">
+      <div className="flex min-h-screen items-center justify-center bg-[#0B0F17]">
         <div className="text-center">
-          <RefreshCw className="mx-auto h-8 w-8 animate-spin text-[#1f7775]" />
-          <p className="mt-3 text-sm font-semibold text-slate-600">Loading Merchant Dashboard...</p>
+          <RefreshCw className="mx-auto h-8 w-8 animate-spin text-purple-400" />
+          <p className="mt-3 text-sm font-semibold text-purple-200">Loading Merchant Dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f7f6] pb-24 text-[#142033]">
+    <div className="min-h-screen bg-[#0B0F17] pb-24 text-slate-100 font-sans selection:bg-purple-500/30">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md shadow-xs sm:px-6">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-violet-500/20 bg-[#161D2F]/90 px-4 backdrop-blur-md shadow-lg shadow-purple-950/20 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1f7775] text-xs font-black text-white shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-xs font-black text-white shadow-md shadow-purple-600/30 border border-purple-400/30">
             Flinty
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-900 leading-tight">{shop?.name || 'Merchant Store'}</h1>
-            <p className="text-[11px] font-semibold text-[#1f7775]">{shop?.category || 'Retail Partner'}</p>
+            <h1 className="text-sm font-black text-white leading-tight">{shop?.name || 'Merchant Store'}</h1>
+            <p className="text-[11px] font-semibold text-purple-400">{shop?.category || 'Retail Partner'}</p>
           </div>
         </div>
 
@@ -384,7 +384,7 @@ export default function MerchantDashboardPage() {
             type="button"
             onClick={() => setAudioEnabled(!audioEnabled)}
             className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
-              audioEnabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-400'
+              audioEnabled ? 'border-purple-500/30 bg-purple-500/10 text-purple-300' : 'border-slate-800 bg-slate-900/60 text-slate-500'
             }`}
             title={audioEnabled ? 'Chime alerts ON' : 'Chime alerts OFF'}
           >
@@ -395,7 +395,7 @@ export default function MerchantDashboardPage() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100"
+            className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/20"
           >
             <LogOut className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Logout</span>
@@ -489,32 +489,32 @@ export default function MerchantDashboardPage() {
 
       {/* Real-time Notification Modal */}
       {incomingClaimAlert && incomingClaimAlert.status === 'PENDING' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border-2 border-amber-400">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5 text-amber-600">
-                <div className="p-2 rounded-xl bg-amber-100 animate-pulse">
-                  <Bell className="w-5 h-5 text-amber-700" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-[#161D2F] rounded-3xl p-6 max-w-sm w-full shadow-2xl border-2 border-amber-400/80 text-white">
+            <div className="flex items-center justify-between pb-3 border-b border-purple-500/20">
+              <div className="flex items-center gap-2.5 text-amber-400">
+                <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/30 animate-pulse">
+                  <Bell className="w-5 h-5 text-amber-300" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-base">New Card Request</h3>
-                  <p className="text-[11px] text-slate-500">{shop?.name}</p>
+                  <h3 className="font-extrabold text-white text-base">New Card Request</h3>
+                  <p className="text-[11px] text-purple-300/70">{shop?.name}</p>
                 </div>
               </div>
             </div>
 
-            <div className="my-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs text-slate-700">
+            <div className="my-4 p-4 rounded-2xl bg-[#070A10] border border-purple-500/20 space-y-1.5 text-xs text-slate-300">
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Customer:</span>
-                <span className="font-bold text-slate-900">{incomingClaimAlert.customerName}</span>
+                <span className="text-slate-400 font-medium">Customer:</span>
+                <span className="font-bold text-white">{incomingClaimAlert.customerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Mobile:</span>
-                <span className="font-mono font-semibold text-slate-900">+91 {incomingClaimAlert.customerMobile}</span>
+                <span className="text-slate-400 font-medium">Mobile:</span>
+                <span className="font-mono font-semibold text-purple-300">+91 {incomingClaimAlert.customerMobile}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Time:</span>
-                <span className="font-mono font-semibold text-slate-600">
+                <span className="text-slate-400 font-medium">Time:</span>
+                <span className="font-mono font-semibold text-slate-400">
                   {new Date(incomingClaimAlert.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
@@ -524,7 +524,7 @@ export default function MerchantDashboardPage() {
               <button
                 type="button"
                 onClick={() => setRejectingClaim(incomingClaimAlert)}
-                className="flex-1 py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 active:scale-95 transition-all"
+                className="flex-1 py-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold text-xs border border-rose-500/30 active:scale-95 transition-all"
               >
                 REJECT
               </button>
@@ -532,7 +532,7 @@ export default function MerchantDashboardPage() {
                 type="button"
                 onClick={() => handleAccept(incomingClaimAlert.id)}
                 disabled={actionInProgress === incomingClaimAlert.id}
-                className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md active:scale-95 transition-all disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-900/30 active:scale-95 transition-all disabled:opacity-50"
               >
                 APPROVE
               </button>
@@ -543,26 +543,26 @@ export default function MerchantDashboardPage() {
 
       {/* Reject Modal */}
       {rejectingClaim && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200">
-            <div className="flex items-center gap-3 text-rose-600 mb-3">
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-[#161D2F] rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-purple-500/30 text-white">
+            <div className="flex items-center gap-3 text-rose-400 mb-3">
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-base">Reject Customer Claim</h3>
-                <p className="text-xs text-slate-500">{rejectingClaim.customerName} ({rejectingClaim.claimCode})</p>
+                <h3 className="font-bold text-white text-base">Reject Customer Claim</h3>
+                <p className="text-xs text-slate-400">{rejectingClaim.customerName} ({rejectingClaim.claimCode})</p>
               </div>
             </div>
 
             <div className="space-y-3 my-4">
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-purple-300 uppercase tracking-wider">
                 Reason for Rejection
               </label>
               <select
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                className="w-full p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-medium outline-none focus:border-rose-500"
+                className="w-full p-2.5 text-xs bg-[#070A10] border border-purple-500/30 text-white rounded-xl font-medium outline-none focus:border-purple-500"
               >
                 <option value="Minimum order amount not met">Minimum order amount not met</option>
                 <option value="Customer not physically present at counter">Customer not physically present at counter</option>
@@ -572,18 +572,18 @@ export default function MerchantDashboardPage() {
               </select>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-purple-500/20">
               <button
                 type="button"
                 onClick={() => setRejectingClaim(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleReject(rejectingClaim.id, rejectionReason)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-md"
               >
                 Confirm Rejection
               </button>
@@ -594,58 +594,58 @@ export default function MerchantDashboardPage() {
 
       {/* New Campaign Modal */}
       {showNewCampaignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-[#161D2F] rounded-3xl p-6 max-w-md w-full shadow-2xl border border-purple-500/30 text-white">
+            <div className="flex items-center justify-between pb-3 border-b border-purple-500/20">
               <div className="flex items-center gap-2">
-                <Megaphone className="h-5 w-5 text-[#1f7775]" />
-                <h3 className="font-extrabold text-slate-900 text-base">New Marketing Campaign</h3>
+                <Megaphone className="h-5 w-5 text-purple-400" />
+                <h3 className="font-extrabold text-white text-base">New Marketing Campaign</h3>
               </div>
-              <button type="button" onClick={() => setShowNewCampaignModal(false)} className="text-slate-400 hover:text-slate-600">
+              <button type="button" onClick={() => setShowNewCampaignModal(false)} className="text-slate-400 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateCampaign} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Campaign Title</label>
+                <label className="block font-bold text-purple-300 mb-1">Campaign Title</label>
                 <input
                   value={newCampTitle}
                   onChange={(e) => setNewCampTitle(e.target.value)}
                   placeholder="e.g. Festival Stamp Bonus"
                   required
-                  className="w-full rounded-xl border border-slate-200 p-2.5 outline-none focus:border-[#1f7775]"
+                  className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-2.5 outline-none focus:border-purple-500"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Campaign Description</label>
+                <label className="block font-bold text-purple-300 mb-1">Campaign Description</label>
                 <textarea
                   value={newCampDesc}
                   onChange={(e) => setNewCampDesc(e.target.value)}
                   placeholder="Get double stamps on all weekend visits"
                   rows={2}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 outline-none focus:border-[#1f7775]"
+                  className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-2.5 outline-none focus:border-purple-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Discount %</label>
+                  <label className="block font-bold text-purple-300 mb-1">Discount %</label>
                   <input
                     type="number"
                     value={newCampDiscount}
                     onChange={(e) => setNewCampDiscount(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 outline-none focus:border-[#1f7775]"
+                    className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-2.5 outline-none focus:border-purple-500"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Expiry Date</label>
+                  <label className="block font-bold text-purple-300 mb-1">Expiry Date</label>
                   <input
                     type="date"
                     value={newCampExpiry}
                     onChange={(e) => setNewCampExpiry(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 outline-none focus:border-[#1f7775]"
+                    className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-2.5 outline-none focus:border-purple-500"
                   />
                 </div>
               </div>
@@ -654,13 +654,13 @@ export default function MerchantDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setShowNewCampaignModal(false)}
-                  className="px-4 py-2 rounded-xl text-slate-600 font-semibold"
+                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-white font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-[#1f7775] text-white font-bold shadow-md hover:bg-[#185e5c]"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold shadow-lg shadow-purple-600/30 border border-purple-400/30"
                 >
                   Launch Campaign
                 </button>
@@ -698,61 +698,61 @@ function MerchantHomeView({
   const shopPathUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://flinty-orcin.vercel.app'}/shop/${merchantSlug}`;
 
   useEffect(() => {
-    QRCode.toDataURL(shopPathUrl, { width: 320, margin: 1, color: { dark: '#123c46', light: '#ffffff' } })
+    QRCode.toDataURL(shopPathUrl, { width: 320, margin: 1, color: { dark: '#7C3AED', light: '#ffffff' } })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(''));
   }, [shopPathUrl]);
 
   return (
-    <main className="min-h-[calc(100vh-120px)] bg-[#f3f7f6] pb-4 text-[#142033]">
-      <section className="rounded-b-[26px] bg-gradient-to-br from-[#123c46] to-[#1f6970] px-5 pb-5 pt-6 text-white shadow-lg shadow-[#123c46]/20">
+    <main className="min-h-[calc(100vh-120px)] bg-[#0B0F17] pb-4 text-slate-100">
+      <section className="rounded-b-[26px] bg-gradient-to-br from-violet-950/80 via-purple-950/50 to-[#0B0F17] px-5 pb-5 pt-6 text-white shadow-xl shadow-purple-950/30 border-b border-violet-500/20">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-[10px] font-black">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-purple-400/30 bg-purple-500/20 text-[10px] font-black text-purple-300">
             Flinty
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-white/75">Good day,</p>
-            <h1 className="text-base font-black">{shop?.name || 'Your Business'}</h1>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-purple-300/70">Good day,</p>
+            <h1 className="text-base font-black text-white">{shop?.name || 'Your Business'}</h1>
           </div>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2">
-          <div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center">
-            <Clock className="mx-auto h-4 w-4" />
-            <b className="mt-1 block text-lg leading-5">{pendingClaims.length}</b>
-            <span className="text-[8px] font-bold uppercase tracking-wider text-white/75">Pending</span>
+          <div className="rounded-xl border border-purple-500/20 bg-[#161D2F]/80 px-2 py-2 text-center">
+            <Clock className="mx-auto h-4 w-4 text-purple-400" />
+            <b className="mt-1 block text-lg leading-5 text-white">{pendingClaims.length}</b>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-purple-300/70">Pending</span>
           </div>
-          <div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center">
-            <Users className="mx-auto h-4 w-4" />
-            <b className="mt-1 block text-lg leading-5">{claims.length}</b>
-            <span className="text-[8px] font-bold uppercase tracking-wider text-white/75">Customers</span>
+          <div className="rounded-xl border border-purple-500/20 bg-[#161D2F]/80 px-2 py-2 text-center">
+            <Users className="mx-auto h-4 w-4 text-purple-400" />
+            <b className="mt-1 block text-lg leading-5 text-white">{claims.length}</b>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-purple-300/70">Customers</span>
           </div>
-          <div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center">
-            <QrCode className="mx-auto h-4 w-4" />
-            <b className="mt-1 block text-lg leading-5">Live</b>
-            <span className="text-[8px] font-bold uppercase tracking-wider text-white/75">QR Status</span>
+          <div className="rounded-xl border border-purple-500/20 bg-[#161D2F]/80 px-2 py-2 text-center">
+            <QrCode className="mx-auto h-4 w-4 text-purple-400" />
+            <b className="mt-1 block text-lg leading-5 text-emerald-400">Live</b>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-purple-300/70">QR Status</span>
           </div>
         </div>
       </section>
 
       {/* Prominent Counter QR Section */}
       <section className="px-4 pt-6 text-center pb-6">
-        <div className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow-md border border-slate-200/80">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e3f1ef] text-[#1f7775] text-[11px] font-extrabold uppercase tracking-wider mb-2">
-            <QrCode className="w-3.5 h-3.5" />
+        <div className="mx-auto max-w-md rounded-3xl bg-[#161D2F] p-6 shadow-xl border border-violet-500/20">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[11px] font-extrabold uppercase tracking-wider mb-2">
+            <QrCode className="w-3.5 h-3.5 text-purple-400" />
             Counter QR Stand Code
           </span>
-          <h2 className="text-lg font-black text-slate-900">{shop?.name || 'Store'} Loyalty QR</h2>
-          <p className="mt-1 text-xs font-mono font-bold text-[#1f7775] break-all">{shopPathUrl}</p>
+          <h2 className="text-lg font-black text-white">{shop?.name || 'Store'} Loyalty QR</h2>
+          <p className="mt-1 text-xs font-mono font-bold text-purple-400 break-all">{shopPathUrl}</p>
 
           <div className="my-5 flex justify-center">
             <img
               src={qrDataUrl || '/counter-qr.png'}
               alt={`${shop?.name || 'Store'} QR code`}
-              className="h-56 w-56 rounded-2xl bg-white p-3 shadow-sm ring-4 ring-[#dcefeb] object-contain"
+              className="h-56 w-56 rounded-2xl bg-white p-3 shadow-lg ring-4 ring-purple-500/30 object-contain"
             />
           </div>
 
-          <p className="text-xs text-slate-500 font-medium leading-relaxed">
+          <p className="text-xs text-purple-200/70 font-medium leading-relaxed">
             Display this QR code at your checkout counter. Customers scan it to collect stamps and earn rewards.
           </p>
 
@@ -761,7 +761,7 @@ function MerchantHomeView({
               <a
                 href={qrDataUrl}
                 download={`${merchantSlug}-counter-qr.png`}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#1f7775] text-white text-xs font-bold shadow-md hover:bg-[#185e5c] active:scale-95 transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 border border-purple-400/30 active:scale-95 transition-all"
               >
                 <Download className="w-4 h-4" />
                 <span>Download Counter QR Code</span>
@@ -774,7 +774,7 @@ function MerchantHomeView({
                     alert('Copied link: ' + shopPathUrl);
                   }
                 }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-purple-500/30 bg-purple-950/40 text-purple-300 hover:bg-purple-900/50 text-xs font-bold transition-all"
               >
                 <span>Copy Direct Link</span>
               </button>
@@ -786,49 +786,49 @@ function MerchantHomeView({
       {/* Live Approvals Feed */}
       <section className="px-4 pt-2 pb-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold">Pending Approvals &amp; Redemptions</h2>
-          <span className="rounded-full bg-[#fff4d6] px-2.5 py-1 text-[10px] font-bold text-[#a66a00]">
+          <h2 className="text-sm font-bold text-white">Pending Approvals &amp; Redemptions</h2>
+          <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-[10px] font-bold text-amber-400">
             {pendingClaims.length} waiting
           </span>
         </div>
         <div className="mt-3 space-y-2">
           {pendingClaims.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center text-xs text-slate-500">
+            <div className="rounded-2xl border border-dashed border-purple-500/30 bg-[#161D2F] p-5 text-center text-xs text-purple-200/60">
               No pending approvals. Customer QR scans will appear here in real time.
             </div>
           ) : (
             pendingClaims.slice(0, 5).map((claim) => {
               const isReward = claim.is8thStampReward || Boolean(claim.rewardCode);
               return (
-                <div key={claim.id} className={`rounded-2xl border-2 p-3.5 shadow-sm ${isReward ? 'border-amber-500 bg-amber-50/60' : 'border-[#e1a928] bg-white'}`}>
+                <div key={claim.id} className={`rounded-2xl border p-3.5 shadow-md ${isReward ? 'border-amber-500/50 bg-amber-950/20' : 'border-purple-500/30 bg-[#161D2F]'}`}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       {isReward && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-500 px-2 py-0.5 text-[9px] font-black uppercase text-white mb-1">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-amber-500 to-yellow-500 px-2 py-0.5 text-[9px] font-black uppercase text-slate-950 mb-1">
                           <Gift className="w-3 h-3" />
                           Reward Redemption
                         </span>
                       )}
-                      <p className="text-sm font-bold text-slate-900">{claim.customerName}</p>
-                      <p className="mt-0.5 font-mono text-[10px] text-slate-500">+91 {claim.customerMobile}</p>
+                      <p className="text-sm font-bold text-white">{claim.customerName}</p>
+                      <p className="mt-0.5 font-mono text-[10px] text-purple-300/70">+91 {claim.customerMobile}</p>
                       {isReward && claim.rewardCode && (
-                        <p className="mt-1 font-mono text-xs font-black text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded w-fit border border-amber-300">
+                        <p className="mt-1 font-mono text-xs font-black text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded w-fit border border-amber-500/40">
                           Code: {claim.rewardCode}
                         </p>
                       )}
                       <p className="mt-1 text-[10px] text-slate-400">{new Date(claim.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button type="button" aria-label="Reject" onClick={() => onReject(claim)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-[#fff4d6]">
+                      <button type="button" aria-label="Reject" onClick={() => onReject(claim)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20">
                         <X className="h-4 w-4" />
                       </button>
                       {isReward ? (
-                        <button type="button" onClick={() => onRedeem ? onRedeem(claim.id) : onAccept(claim.id)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-600 text-white font-black text-xs hover:bg-amber-700 shadow-md">
+                        <button type="button" onClick={() => onRedeem ? onRedeem(claim.id) : onAccept(claim.id)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 text-slate-950 font-black text-xs hover:from-amber-500 hover:to-yellow-500 shadow-md">
                           <Check className="h-4 w-4" />
                           <span>Redeem</span>
                         </button>
                       ) : (
-                        <button type="button" aria-label="Approve" onClick={() => onAccept(claim.id)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1f7775] text-white hover:bg-[#185e5c]">
+                        <button type="button" aria-label="Approve" onClick={() => onAccept(claim.id)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 shadow-md">
                           <Check className="h-4 w-4" />
                         </button>
                       )}
@@ -881,7 +881,7 @@ function CustomerDirectory({ claims, shopName }: { claims: Claim[]; shopName: st
   return (
     <FeatureShell title="Customers" subtitle={`Real registered customers at ${shopName}`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 rounded-xl bg-slate-200/80 p-1 text-xs font-semibold">
+        <div className="flex items-center gap-1 rounded-xl bg-[#161D2F] border border-purple-500/20 p-1 text-xs font-semibold">
           <FilterButton label="All" active={filter === 'ALL'} onClick={() => setFilter('ALL')} />
           <FilterButton label="Active" active={filter === 'ACTIVE'} onClick={() => setFilter('ACTIVE')} />
           <FilterButton label="Completed" active={filter === 'COMPLETED'} onClick={() => setFilter('COMPLETED')} />
@@ -889,9 +889,9 @@ function CustomerDirectory({ claims, shopName }: { claims: Claim[]; shopName: st
         <button
           type="button"
           onClick={exportCustomers}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-[#1f7775] hover:text-[#1f7775] shadow-xs"
+          className="inline-flex items-center gap-2 rounded-xl border border-purple-500/30 bg-[#161D2F] px-3 py-2 text-xs font-bold text-purple-300 hover:bg-purple-900/40 shadow-xs"
         >
-          <Download className="h-4 w-4" /> Export CSV
+          <Download className="h-4 w-4 text-purple-400" /> Export CSV
         </button>
       </div>
 
@@ -927,46 +927,46 @@ function CustomerDetail({
 }) {
   const lastVisit = new Date(Math.max(...claims.map((claim) => new Date(claim.createdAt).getTime())));
   return (
-    <div className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition ${expanded ? 'border-[#1f7775]' : 'border-slate-200'}`}>
+    <div className={`overflow-hidden rounded-2xl border bg-[#161D2F] shadow-md transition ${expanded ? 'border-purple-500' : 'border-purple-500/20'}`}>
       <button type="button" onClick={onToggle} className="flex w-full items-center justify-between gap-4 p-4 text-left">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e3f1ef] text-sm font-black text-[#1f7775]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-500/20 border border-purple-500/30 text-sm font-black text-purple-300">
             {customer.customerName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-slate-900">{customer.customerName}</p>
-            <p className="mt-0.5 font-mono text-[11px] text-slate-500">+91 {customer.customerMobile}</p>
+            <p className="truncate text-sm font-bold text-white">{customer.customerName}</p>
+            <p className="mt-0.5 font-mono text-[11px] text-purple-300/70">+91 {customer.customerMobile}</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xs font-bold text-[#1f7775]">{claims.length} stamps</p>
+          <p className="text-xs font-bold text-purple-400">{claims.length} stamps</p>
           <p className="text-[9px] uppercase tracking-wide text-slate-400">Click to expand</p>
         </div>
       </button>
 
       {expanded && (
-        <div className="border-t border-slate-100 px-4 pb-4 pt-3 bg-slate-50/50">
+        <div className="border-t border-purple-500/20 px-4 pb-4 pt-3 bg-[#0B0F17]/50">
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div>
-              <p className="text-slate-400 text-[10px] uppercase font-bold">Total Visits</p>
-              <p className="mt-1 font-bold text-slate-900">{claims.length}</p>
+              <p className="text-purple-300/60 text-[10px] uppercase font-bold">Total Visits</p>
+              <p className="mt-1 font-bold text-white">{claims.length}</p>
             </div>
             <div>
-              <p className="text-slate-400 text-[10px] uppercase font-bold">Last Visit</p>
-              <p className="mt-1 font-bold text-slate-900">{formatRelative(lastVisit)}</p>
+              <p className="text-purple-300/60 text-[10px] uppercase font-bold">Last Visit</p>
+              <p className="mt-1 font-bold text-white">{formatRelative(lastVisit)}</p>
             </div>
             <div>
-              <p className="text-slate-400 text-[10px] uppercase font-bold">Status</p>
-              <p className="mt-1 font-bold text-emerald-600">{customer.status}</p>
+              <p className="text-purple-300/60 text-[10px] uppercase font-bold">Status</p>
+              <p className="mt-1 font-bold text-emerald-400">{customer.status}</p>
             </div>
           </div>
-          <div className="mt-4 border-t border-slate-200 pt-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Scan &amp; Stamp History</p>
+          <div className="mt-4 border-t border-purple-500/20 pt-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-purple-300/60">Scan &amp; Stamp History</p>
             <div className="mt-2 space-y-2">
               {claims.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((claim, index) => (
-                <div key={claim.id} className="flex items-center justify-between text-[11px] text-slate-600 bg-white p-2 rounded-xl border border-slate-200/60">
+                <div key={claim.id} className="flex items-center justify-between text-[11px] text-slate-300 bg-[#161D2F] p-2 rounded-xl border border-purple-500/20">
                   <span>Visit #{claims.length - index} • {new Date(claim.createdAt).toLocaleDateString()} {new Date(claim.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
-                  <span className="font-bold text-[#1f7775]">{claim.status}</span>
+                  <span className="font-bold text-purple-400">{claim.status}</span>
                 </div>
               ))}
             </div>
@@ -1019,8 +1019,8 @@ function RewardsManagerView({
         <Metric label="Repeat Customers" value={String(new Set(acceptedClaims.map((c) => c.customerMobile)).size)} />
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-base font-bold text-slate-900 mb-4">Edit Loyalty Reward Rules</h3>
+      <div className="rounded-3xl border border-violet-500/20 bg-[#161D2F] p-6 shadow-xl text-white">
+        <h3 className="text-base font-bold text-white mb-4">Edit Loyalty Reward Rules</h3>
 
         <form
           onSubmit={(e) => {
@@ -1030,59 +1030,59 @@ function RewardsManagerView({
           className="space-y-4 text-xs"
         >
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Reward Program Title</label>
+            <label className="block font-bold text-purple-300 mb-1">Reward Program Title</label>
             <input
               value={offerTitle}
               onChange={(e) => onOfferTitleChange(e.target.value)}
               required
               placeholder="e.g. Free Coffee after 8 visits"
-              className="w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-[#1f7775]"
+              className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 text-xs outline-none focus:border-purple-500"
             />
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Reward Description &amp; Terms</label>
+            <label className="block font-bold text-purple-300 mb-1">Reward Description &amp; Terms</label>
             <textarea
               value={offerMessage}
               onChange={(e) => onOfferMessageChange(e.target.value)}
               rows={3}
               placeholder="e.g. Valid on all beverages. Show coupon to cashier."
-              className="w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-[#1f7775]"
+              className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 text-xs outline-none focus:border-purple-500"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Visits Required</label>
+              <label className="block font-bold text-purple-300 mb-1">Visits Required</label>
               <input
                 type="number"
                 min="1"
                 max="50"
                 value={visitsRequired}
                 onChange={(e) => onVisitsRequiredChange(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 text-xs outline-none focus:border-purple-500"
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Discount %</label>
+              <label className="block font-bold text-purple-300 mb-1">Discount %</label>
               <input
                 type="number"
                 min="1"
                 max="100"
                 value={discountPercent}
                 onChange={(e) => onDiscountPercentChange(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 text-xs outline-none focus:border-purple-500"
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Expiry (Days)</label>
+              <label className="block font-bold text-purple-300 mb-1">Expiry (Days)</label>
               <input
                 type="number"
                 min="1"
                 max="365"
                 value={rewardExpiry}
                 onChange={(e) => onRewardExpiryChange(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 text-xs outline-none focus:border-purple-500"
               />
             </div>
           </div>
@@ -1090,13 +1090,13 @@ function RewardsManagerView({
           <button
             type="submit"
             disabled={offerSaving}
-            className="w-full rounded-xl bg-[#1f7775] py-3.5 font-bold text-white shadow-md hover:bg-[#185e5c] disabled:opacity-60 transition-all"
+            className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 py-3.5 font-bold text-white shadow-lg shadow-purple-600/30 border border-purple-400/30 disabled:opacity-60 transition-all"
           >
             {offerSaving ? 'Saving Changes...' : 'Save Reward Program Permanently'}
           </button>
 
           {offerSaved && (
-            <p className="text-center text-xs font-bold text-emerald-600 bg-emerald-50 py-2 rounded-xl border border-emerald-200">
+            <p className="text-center text-xs font-bold text-emerald-400 bg-emerald-950/60 py-2 rounded-xl border border-emerald-500/30">
               ✓ Reward program saved to database successfully!
             </p>
           )}
@@ -1132,11 +1132,11 @@ function MarketingView({
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-extrabold text-slate-900 text-base">Active Marketing Offers</h3>
+        <h3 className="font-extrabold text-white text-base">Active Marketing Offers</h3>
         <button
           type="button"
           onClick={onOpenCreateModal}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#1f7775] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#185e5c]"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-purple-600/30 border border-purple-400/30"
         >
           <PlusCircle className="h-4 w-4" /> Create Campaign
         </button>
@@ -1144,19 +1144,19 @@ function MarketingView({
 
       <div className="space-y-3">
         {campaigns.map((camp) => (
-          <div key={camp.id} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+          <div key={camp.id} className="flex items-center justify-between rounded-2xl border border-violet-500/20 bg-[#161D2F] p-5 shadow-md text-white">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e3f1ef] text-[#1f7775]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/30">
                 <Megaphone className="h-6 w-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-slate-900 text-sm">{camp.title}</h4>
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                  <h4 className="font-bold text-white text-sm">{camp.title}</h4>
+                  <span className="rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
                     {camp.discountPercent}% OFF
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-500">{camp.description}</p>
+                <p className="mt-1 text-xs text-purple-200/70">{camp.description}</p>
                 <p className="mt-2 text-[10px] font-semibold text-slate-400">Expires: {camp.expiryDate} • {camp.claimsCount} claims collected</p>
               </div>
             </div>
@@ -1164,7 +1164,7 @@ function MarketingView({
             <button
               type="button"
               onClick={() => onToggleCampaign(camp.id)}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition ${camp.enabled ? 'bg-[#1f7775]' : 'bg-slate-300'}`}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition ${camp.enabled ? 'bg-violet-600' : 'bg-slate-800'}`}
             >
               <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${camp.enabled ? 'left-6' : 'left-1'}`} />
             </button>
@@ -1231,18 +1231,18 @@ function CreateOfferView({
             e.preventDefault();
             onSaveOffer();
           }}
-          className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs"
+          className="space-y-5 rounded-3xl border border-violet-500/20 bg-[#161D2F] p-6 shadow-xl text-white"
         >
-          <h3 className="font-bold text-slate-900 text-base">Offer Configuration</h3>
+          <h3 className="font-bold text-white text-base">Offer Configuration</h3>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-2">Reward Image (File Upload or URL)</label>
+            <label className="block text-xs font-bold text-purple-300 mb-2">Reward Image (File Upload or URL)</label>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <label className="flex h-28 w-28 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-slate-100 ring-2 ring-slate-200/80 hover:bg-slate-50 transition">
+              <label className="flex h-28 w-28 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-[#070A10] border border-purple-500/30 hover:border-purple-500 transition">
                 {offerImage ? (
                   <img src={offerImage} alt="Reward preview" className="h-full w-full object-cover" />
                 ) : (
-                  <span className="text-center text-[11px] font-bold text-slate-400">
+                  <span className="text-center text-[11px] font-bold text-slate-500">
                     + Upload<br />Image
                   </span>
                 )}
@@ -1254,9 +1254,9 @@ function CreateOfferView({
                   value={offerImage}
                   onChange={(e) => onOfferImageChange(e.target.value)}
                   placeholder="Or paste image URL here..."
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs outline-none focus:border-[#1f7775]"
+                  className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white px-3.5 py-2 text-xs outline-none focus:border-purple-500"
                 />
-                <p className="text-[11px] text-slate-500 leading-relaxed">
+                <p className="text-[11px] text-slate-400 leading-relaxed">
                   Upload an image file or paste an image link. This image will appear on the customer card.
                 </p>
               </div>
@@ -1265,7 +1265,7 @@ function CreateOfferView({
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Visits Required</label>
+              <label className="block text-xs font-bold text-purple-300 mb-1">Visits Required</label>
               <input
                 type="number"
                 min="1"
@@ -1273,20 +1273,20 @@ function CreateOfferView({
                 value={visitsRequired}
                 onChange={(e) => onVisitsRequiredChange(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white px-3.5 py-2.5 text-xs outline-none focus:border-purple-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Expiry Date</label>
+              <label className="block text-xs font-bold text-purple-300 mb-1">Expiry Date</label>
               <input
                 type="date"
                 value={expiryDate}
                 onChange={(e) => onExpiryDateChange(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white px-3.5 py-2.5 text-xs outline-none focus:border-purple-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Expiry (Days)</label>
+              <label className="block text-xs font-bold text-purple-300 mb-1">Expiry (Days)</label>
               <input
                 type="number"
                 min="1"
@@ -1294,69 +1294,69 @@ function CreateOfferView({
                 value={rewardExpiry}
                 onChange={(e) => onRewardExpiryChange(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white px-3.5 py-2.5 text-xs outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Reward Title / Description</label>
+            <label className="block text-xs font-bold text-purple-300 mb-1">Reward Title / Description</label>
             <input
               value={offerTitle}
               onChange={(e) => onOfferTitleChange(e.target.value)}
               required
               placeholder="e.g. Free Cupcake or 15% Off Total Bill"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none focus:border-[#1f7775]"
+              className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white px-4 py-3 text-xs outline-none focus:border-purple-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Additional Details / Terms</label>
+            <label className="block text-xs font-bold text-purple-300 mb-1">Additional Details / Terms</label>
             <textarea
               value={offerMessage}
               onChange={(e) => onOfferMessageChange(e.target.value)}
               required
               placeholder="Mention conditions e.g. Valid once per user bill."
               rows={3}
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none focus:border-[#1f7775]"
+              className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white px-4 py-3 text-xs outline-none focus:border-purple-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={offerSaving}
-            className="w-full rounded-xl bg-[#1f7775] py-3.5 text-xs font-bold text-white shadow-md hover:bg-[#185e5c] disabled:opacity-60 transition-all"
+            className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 py-3.5 text-xs font-bold text-white shadow-lg shadow-purple-600/30 border border-purple-400/30 disabled:opacity-60 transition-all"
           >
             {offerSaving ? 'Saving Offer...' : 'Save & Publish Offer to Database'}
           </button>
 
           {offerSaved && (
-            <p className="text-center text-xs font-bold text-emerald-600 bg-emerald-50 py-2.5 rounded-xl border border-emerald-200">
+            <p className="text-center text-xs font-bold text-emerald-400 bg-emerald-950/60 py-2.5 rounded-xl border border-emerald-500/30">
               ✓ Offer saved &amp; published live for {shopName}!
             </p>
           )}
         </form>
 
         <div>
-          <div className="sticky top-24 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Live Customer Card Preview</p>
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-              <div className="flex h-36 items-center justify-center bg-slate-200/80 overflow-hidden">
+          <div className="sticky top-24 rounded-3xl border border-violet-500/20 bg-[#161D2F] p-5 shadow-xl text-white">
+            <p className="text-xs font-bold uppercase tracking-wider text-purple-300/70 mb-3">Live Customer Card Preview</p>
+            <div className="overflow-hidden rounded-2xl border border-purple-500/20 bg-[#070A10] shadow-md">
+              <div className="flex h-36 items-center justify-center bg-slate-950 overflow-hidden border-b border-purple-500/20">
                 {offerImage ? (
                   <img src={offerImage} alt="Live preview" className="h-full w-full object-cover" />
                 ) : (
-                  <Gift className="h-12 w-12 text-slate-400" />
+                  <Gift className="h-12 w-12 text-purple-400/60" />
                 )}
               </div>
-              <div className="p-4 bg-white">
-                <span className="inline-block rounded-full bg-[#e3f1ef] px-2.5 py-0.5 text-[10px] font-extrabold text-[#1f7775] uppercase mb-2">
+              <div className="p-4 bg-[#161D2F]">
+                <span className="inline-block rounded-full bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-purple-300 uppercase mb-2">
                   {shopName}
                 </span>
-                <h4 className="font-black text-slate-900 text-sm leading-snug">{offerTitle || 'Your Reward Description'}</h4>
+                <h4 className="font-black text-white text-sm leading-snug">{offerTitle || 'Your Reward Description'}</h4>
                 
                 {/* Dynamic Stamp Slots Preview */}
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                <div className="mt-3 pt-3 border-t border-purple-500/20">
+                  <p className="text-[10px] font-bold text-purple-300/60 uppercase tracking-wider mb-2">
                     Stamp Slots ({requiredCount} Visits)
                   </p>
                   <div className="grid grid-cols-4 gap-2 justify-items-center">
@@ -1368,8 +1368,8 @@ function CreateOfferView({
                           key={num}
                           className={`w-9 h-9 rounded-full border-2 border-dashed flex items-center justify-center text-[11px] font-bold ${
                             isLast
-                              ? 'border-[#1f7775] bg-[#e3f1ef] text-[#1f7775]'
-                              : 'border-slate-300 bg-white text-slate-400'
+                              ? 'border-purple-500 bg-purple-500/20 text-purple-300'
+                              : 'border-slate-700 bg-slate-900 text-slate-500'
                           }`}
                         >
                           {isLast ? <Gift className="w-4 h-4" /> : num}
@@ -1379,11 +1379,11 @@ function CreateOfferView({
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-600 border-t border-slate-100 pt-3">
+                <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-300 border-t border-purple-500/20 pt-3">
                   <span>{requiredCount} Visits Required</span>
-                  <span className="text-emerald-600">{expiryDate ? `Expires ${expiryDate}` : `${rewardExpiry || '30'} Days Expiry`}</span>
+                  <span className="text-emerald-400">{expiryDate ? `Expires ${expiryDate}` : `${rewardExpiry || '30'} Days Expiry`}</span>
                 </div>
-                <p className="mt-2 text-xs text-slate-500 leading-relaxed">{offerMessage || 'Your reward details will appear here.'}</p>
+                <p className="mt-2 text-xs text-purple-200/70 leading-relaxed">{offerMessage || 'Your reward details will appear here.'}</p>
               </div>
             </div>
           </div>
@@ -1435,85 +1435,85 @@ function MerchantSettingsView({
   return (
     <FeatureShell title="Profile &amp; Settings" subtitle="Manage your business account information &amp; preferences">
       <div className="mx-auto max-w-2xl space-y-5">
-        <section className="rounded-3xl bg-white p-6 shadow-xs border border-slate-200">
-          <div className="flex items-center gap-4 border-b border-slate-100 pb-5">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e3f1ef] text-xl font-black text-[#1f7775]">
+        <section className="rounded-3xl bg-[#161D2F] p-6 shadow-xl border border-violet-500/20 text-white">
+          <div className="flex items-center gap-4 border-b border-purple-500/20 pb-5">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-500/20 border border-purple-500/30 text-xl font-black text-purple-300">
               {businessName.charAt(0) || 'S'}
             </div>
             <div className="flex-1">
               <input
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full text-lg font-black text-slate-900 outline-none focus:border-b focus:border-[#1f7775]"
+                className="w-full text-lg font-black text-white bg-transparent outline-none focus:border-b focus:border-purple-500"
                 placeholder="Business Name"
               />
               <input
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="mt-1 w-full text-xs font-semibold text-slate-500 outline-none"
+                className="mt-1 w-full text-xs font-semibold text-purple-400 bg-transparent outline-none"
                 placeholder="Business Category"
               />
             </div>
           </div>
 
-          <div className="divide-y divide-slate-100 text-xs">
+          <div className="divide-y divide-purple-500/20 text-xs">
             <div className="py-4">
-              <label className="block font-bold text-slate-700 mb-1">Store Address</label>
+              <label className="block font-bold text-purple-300 mb-1">Store Address</label>
               <input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 outline-none focus:border-purple-500"
                 placeholder="Full Store Address"
               />
             </div>
 
             <div className="py-4 grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Opening Time</label>
+                <label className="block font-bold text-purple-300 mb-1">Opening Time</label>
                 <input
                   value={openingTime}
                   onChange={(e) => setOpeningTime(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-[#1f7775]"
+                  className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 outline-none focus:border-purple-500"
                 />
               </div>
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Closing Time</label>
+                <label className="block font-bold text-purple-300 mb-1">Closing Time</label>
                 <input
                   value={closingTime}
                   onChange={(e) => setClosingTime(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-[#1f7775]"
+                  className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 outline-none focus:border-purple-500"
                 />
               </div>
             </div>
 
             <div className="py-4">
-              <label className="block font-bold text-slate-700 mb-1">Phone Number</label>
+              <label className="block font-bold text-purple-300 mb-1">Phone Number</label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 outline-none focus:border-purple-500"
               />
             </div>
 
             <div className="py-4">
-              <label className="block font-bold text-slate-700 mb-1">Email Address</label>
+              <label className="block font-bold text-purple-300 mb-1">Email Address</label>
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
-                className="w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-3 outline-none focus:border-purple-500"
               />
             </div>
 
             <div className="py-4 flex items-center justify-between">
               <div>
-                <p className="font-bold text-slate-900">Allow Remote Scan</p>
-                <p className="text-slate-500 text-[11px]">Customers can scan QR without location lock</p>
+                <p className="font-bold text-white">Allow Remote Scan</p>
+                <p className="text-purple-200/70 text-[11px]">Customers can scan QR without location lock</p>
               </div>
               <button
                 type="button"
                 onClick={() => onRemoteScanChange(!remoteScanEnabled)}
-                className={`relative h-6 w-11 rounded-full transition ${remoteScanEnabled ? 'bg-[#1f7775]' : 'bg-slate-300'}`}
+                className={`relative h-6 w-11 rounded-full transition ${remoteScanEnabled ? 'bg-violet-600' : 'bg-slate-800'}`}
               >
                 <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${remoteScanEnabled ? 'left-6' : 'left-1'}`} />
               </button>
@@ -1521,25 +1521,25 @@ function MerchantSettingsView({
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-xs border border-slate-200 text-xs">
-          <h3 className="font-bold text-slate-900 text-sm mb-3">Social Links</h3>
+        <section className="rounded-3xl bg-[#161D2F] p-6 shadow-xl border border-violet-500/20 text-white text-xs">
+          <h3 className="font-bold text-white text-sm mb-3">Social Links</h3>
           <div className="space-y-3">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Instagram</label>
+              <label className="block font-semibold text-purple-300 mb-1">Instagram</label>
               <input
                 value={instagram}
                 onChange={(e) => setInstagram(e.target.value)}
                 placeholder="https://instagram.com/yourstore"
-                className="w-full rounded-xl border border-slate-200 p-2.5 outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-2.5 outline-none focus:border-purple-500"
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">WhatsApp</label>
+              <label className="block font-semibold text-purple-300 mb-1">WhatsApp</label>
               <input
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="9876543210"
-                className="w-full rounded-xl border border-slate-200 p-2.5 outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl bg-[#070A10] border border-purple-500/30 text-white p-2.5 outline-none focus:border-purple-500"
               />
             </div>
           </div>
@@ -1548,7 +1548,7 @@ function MerchantSettingsView({
         <button
           type="button"
           onClick={handleSave}
-          className="w-full rounded-xl bg-[#1f7775] py-3.5 text-xs font-bold text-white shadow-md hover:bg-[#185e5c] transition-all"
+          className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 py-3.5 text-xs font-bold text-white shadow-lg shadow-purple-600/30 border border-purple-400/30 transition-all"
         >
           {saved ? '✓ Profile & Settings Saved' : 'Update Profile & Store Information'}
         </button>
@@ -1556,7 +1556,7 @@ function MerchantSettingsView({
         <button
           type="button"
           onClick={onLogout}
-          className="w-full rounded-xl border border-rose-200 bg-rose-50 py-3 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-all"
+          className="w-full rounded-xl border border-rose-500/30 bg-rose-500/10 py-3 text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition-all"
         >
           Logout of Merchant Account
         </button>
@@ -1582,7 +1582,7 @@ function MerchantBottomNav({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-2 py-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-purple-500/20 bg-[#161D2F]/95 backdrop-blur-md px-2 py-2 shadow-2xl shadow-purple-950/50">
       <div className="mx-auto flex max-w-lg items-center justify-around gap-1">
         {items.map((item) => (
           <button
@@ -1591,8 +1591,8 @@ function MerchantBottomNav({
             onClick={() => onSelect(item.view)}
             className={`flex flex-1 min-w-[54px] flex-col items-center gap-1 rounded-xl px-1.5 py-1.5 text-[10px] font-bold transition active:scale-95 ${
               activeView === item.view
-                ? 'text-[#1f7775] font-black bg-[#e3f1ef]'
-                : 'text-slate-400 hover:text-slate-700'
+                ? 'text-purple-300 font-black bg-purple-500/20 border border-purple-500/30'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             {item.icon}
@@ -1608,8 +1608,8 @@ function FeatureShell({ title, subtitle, children }: { title: string; subtitle: 
   return (
     <section className="mb-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-black text-slate-900">{title}</h2>
-        <p className="mt-1 text-xs font-semibold text-slate-500">{subtitle}</p>
+        <h2 className="text-2xl font-black text-white">{title}</h2>
+        <p className="mt-1 text-xs font-semibold text-purple-300/70">{subtitle}</p>
       </div>
       {children}
     </section>
@@ -1618,9 +1618,9 @@ function FeatureShell({ title, subtitle, children }: { title: string; subtitle: 
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
-      <p className="mt-2 text-2xl font-black text-slate-900">{value}</p>
+    <div className="rounded-2xl border border-violet-500/20 bg-[#161D2F] p-5 shadow-md">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-purple-300/70">{label}</p>
+      <p className="mt-2 text-2xl font-black text-white">{value}</p>
     </div>
   );
 }
@@ -1630,7 +1630,7 @@ function FilterButton({ label, active, onClick }: { label: string; active: boole
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-lg px-3.5 py-1.5 transition ${active ? 'bg-[#1f7775] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+      className={`rounded-lg px-3.5 py-1.5 transition ${active ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
     >
       {label}
     </button>
@@ -1639,7 +1639,7 @@ function FilterButton({ label, active, onClick }: { label: string; active: boole
 
 function EmptyMerchantPanel({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-xs font-semibold text-slate-400">
+    <div className="rounded-2xl border border-dashed border-purple-500/30 bg-[#161D2F] p-10 text-center text-xs font-semibold text-purple-300/60">
       {text}
     </div>
   );

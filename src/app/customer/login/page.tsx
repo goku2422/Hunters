@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -51,35 +51,38 @@ function CustomerLoginInner() {
     };
 
     return (
-        <div className="flex min-h-screen flex-col justify-center bg-[#fbfbfb] px-4 py-12 sm:px-6 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fdf0f0] text-[#b20d18] shadow-sm">
+        <div className="flex min-h-screen flex-col justify-center bg-[#0B0F17] px-4 py-12 sm:px-6 lg:px-8 text-white selection:bg-purple-900 selection:text-purple-200 relative overflow-hidden">
+            {/* Background Neon Purple Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
+
+            <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-purple-500 text-white shadow-lg shadow-purple-600/30 border border-purple-400/30">
                     <User className="h-7 w-7" />
                 </div>
-                <h2 className="mt-4 text-center text-3xl font-black tracking-tight text-[#101827]">
+                <h2 className="mt-4 text-center text-3xl font-black tracking-tight text-white">
                     Customer Login
                 </h2>
-                <p className="mt-2 text-center text-sm text-[#6b7280]">
+                <p className="mt-2 text-center text-sm text-slate-400 font-medium">
                     Enter your name & mobile to view your stamp cards & rewards
                 </p>
             </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="rounded-3xl border border-[#edf0f3] bg-white px-6 py-8 shadow-xl shadow-slate-200/50 sm:px-10">
+            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+                <div className="rounded-3xl border border-violet-500/30 bg-[#161D2F] px-6 py-8 shadow-2xl shadow-purple-950/40 sm:px-10">
                     {errorMsg && (
-                        <div className="mb-5 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
-                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                        <div className="mb-5 flex items-start gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-300">
+                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
                             <span>{errorMsg}</span>
                         </div>
                     )}
 
                     <form onSubmit={handleLogin} className="space-y-5">
                         <div>
-                            <label htmlFor="name" className="block text-xs font-bold text-[#101827]">
+                            <label htmlFor="name" className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
                                 Full Name
                             </label>
                             <div className="relative mt-1.5">
-                                <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca3af]" />
+                                <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                                 <input
                                     id="name"
                                     type="text"
@@ -88,17 +91,17 @@ function CustomerLoginInner() {
                                     placeholder="e.g. Rahul Sharma"
                                     required
                                     autoFocus
-                                    className="w-full rounded-xl border border-[#e5e7eb] bg-[#f9fafb] py-3 pl-10 pr-4 text-sm text-[#101827] outline-none transition focus:border-[#b20d18] focus:bg-white focus:ring-2 focus:ring-[#b20d18]/10"
+                                    className="w-full rounded-xl border border-violet-500/30 bg-[#0B0F17] py-3 pl-10 pr-4 text-sm text-white outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="mobile" className="block text-xs font-bold text-[#101827]">
+                            <label htmlFor="mobile" className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
                                 Mobile Number
                             </label>
                             <div className="relative mt-1.5">
-                                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 select-none text-xs font-bold text-[#6b7280]">
+                                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 select-none text-xs font-bold text-slate-500">
                                     +91
                                 </span>
                                 <input
@@ -109,16 +112,16 @@ function CustomerLoginInner() {
                                     placeholder="9876543210"
                                     maxLength={10}
                                     required
-                                    className="w-full rounded-xl border border-[#e5e7eb] bg-[#f9fafb] py-3 pl-12 pr-4 font-mono text-sm text-[#101827] outline-none transition focus:border-[#b20d18] focus:bg-white focus:ring-2 focus:ring-[#b20d18]/10"
+                                    className="w-full rounded-xl border border-violet-500/30 bg-[#0B0F17] py-3 pl-12 pr-4 font-mono text-sm text-white outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                                 />
                             </div>
-                            <p className="mt-1 text-[11px] text-[#9ca3af]">Used to identify your stamp cards. No password or OTP required.</p>
+                            <p className="mt-1.5 text-[11px] text-slate-400">Used to identify your stamp cards. No password or OTP required.</p>
                         </div>
 
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#b20d18] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#b20d18]/20 transition hover:bg-[#970b14] active:scale-95 disabled:opacity-60"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-600/30 transition border border-purple-400/30 active:scale-95 disabled:opacity-60"
                         >
                             {isLoading ? (
                                 <><Loader2 className="h-4 w-4 animate-spin" /> Logging in...</>
@@ -128,16 +131,16 @@ function CustomerLoginInner() {
                         </button>
                     </form>
 
-                    <div className="mt-6 border-t border-[#edf0f3] pt-5 text-center text-xs text-[#6b7280]">
+                    <div className="mt-6 border-t border-violet-500/20 pt-5 text-center text-xs text-slate-400">
                         Are you a business owner?{' '}
-                        <Link href="/merchant/login" className="font-bold text-[#b20d18] hover:underline">
+                        <Link href="/merchant/login" className="font-bold text-purple-400 hover:underline">
                             Merchant Login →
                         </Link>
                     </div>
                 </div>
 
-                <p className="mt-6 text-center text-xs text-[#9ca3af]">
-                    <Link href="/" className="hover:underline">← Back to Home</Link>
+                <p className="mt-6 text-center text-xs text-slate-500">
+                    <Link href="/" className="hover:underline text-slate-400">← Back to Home</Link>
                 </p>
             </div>
         </div>
@@ -147,8 +150,8 @@ function CustomerLoginInner() {
 export default function CustomerLoginPage() {
     return (
         <Suspense fallback={
-            <div className="flex min-h-screen items-center justify-center bg-[#fbfbfb]">
-                <Loader2 className="h-6 w-6 animate-spin text-[#b20d18]" />
+            <div className="flex min-h-screen items-center justify-center bg-[#0B0F17] text-white">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
             </div>
         }>
             <CustomerLoginInner />
