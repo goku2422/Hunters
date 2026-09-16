@@ -73,8 +73,9 @@ export default function MerchantDashboardPage() {
   const [settingsSaved, setSettingsSaved] = useState(false);
 
   // Offer / Reward Form State
+  const offerLoadedRef = useRef(false);
   const [offerTitle, setOfferTitle] = useState('Get 5% discount on your total bill after 8 visits');
-  const [offerMessage, setOfferMessage] = useState('Reward loyal customers with a special treat on every 8th visit.');
+  const [offerMessage, setOfferMessage] = useState('Reward loyal customers with a special treat on every visit.');
   const [offerImage, setOfferImage] = useState('');
   const [visitsRequired, setVisitsRequired] = useState('8');
   const [rewardExpiry, setRewardExpiry] = useState('30');
@@ -158,17 +159,24 @@ export default function MerchantDashboardPage() {
           }
         }
 
-        // Fetch offer
-        const offerRes = await fetch('/api/merchant/offer');
-        const offerData = await offerRes.json();
-        if (offerData.success && offerData.offer) {
-          setOfferTitle(offerData.offer.title || 'Get 5% discount on your total bill after 8 visits');
-          setOfferMessage(offerData.offer.description || 'Special reward for loyal customers.');
-          setVisitsRequired(String(offerData.offer.visitsRequired || 8));
-          setRewardExpiry(String(offerData.offer.expiryDays || 30));
-          if (offerData.offer.expiryDate) setExpiryDate(offerData.offer.expiryDate);
-          if (offerData.offer.image) setOfferImage(offerData.offer.image);
-          if (offerData.offer.discountPercent) setDiscountPercent(String(offerData.offer.discountPercent));
+        // Fetch offer ONLY ONCE on initial load to prevent resetting user input while typing
+        if (!offerLoadedRef.current) {
+          const offerRes = await fetch('/api/merchant/offer');
+          const offerData = await offerRes.json();
+          if (offerData.success && offerData.offer) {
+            if (offerData.offer.title) setOfferTitle(offerData.offer.title);
+            if (offerData.offer.description) setOfferMessage(offerData.offer.description);
+            if (offerData.offer.visitsRequired !== undefined && offerData.offer.visitsRequired !== null) {
+              setVisitsRequired(String(offerData.offer.visitsRequired));
+            }
+            if (offerData.offer.expiryDays !== undefined && offerData.offer.expiryDays !== null) {
+              setRewardExpiry(String(offerData.offer.expiryDays));
+            }
+            if (offerData.offer.expiryDate) setExpiryDate(offerData.offer.expiryDate);
+            if (offerData.offer.image) setOfferImage(offerData.offer.image);
+            if (offerData.offer.discountPercent) setDiscountPercent(String(offerData.offer.discountPercent));
+            offerLoadedRef.current = true;
+          }
         }
       }
     } catch (err) {
@@ -248,13 +256,16 @@ export default function MerchantDashboardPage() {
   const handleSaveOffer = async () => {
     setOfferSaving(true);
     try {
+      const parsedVisits = Number(visitsRequired);
+      const validVisits = !isNaN(parsedVisits) && parsedVisits > 0 ? parsedVisits : 8;
+
       const res = await fetch('/api/merchant/offer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: offerTitle,
           description: offerMessage,
-          visitsRequired: Number(visitsRequired) || 8,
+          visitsRequired: validVisits,
           expiryDays: Number(rewardExpiry) || 30,
           expiryDate: expiryDate || undefined,
           discountPercent: Number(discountPercent) || 15,
@@ -265,6 +276,10 @@ export default function MerchantDashboardPage() {
       const data = await res.json();
       if (data.success) {
         setOfferSaved(true);
+        offerLoadedRef.current = true;
+        if (data.offer?.visitsRequired !== undefined) {
+          setVisitsRequired(String(data.offer.visitsRequired));
+        }
         setTimeout(() => setOfferSaved(false), 3500);
       } else {
         alert(data.message || 'Could not save offer');

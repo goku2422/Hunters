@@ -36,10 +36,13 @@ export async function POST(req: NextRequest) {
   const shopId = session.shopId || 'shop-pizza';
   const body = await req.json();
 
+  const visitsReqNum = Number(body.visitsRequired);
+  const visitsRequired = !isNaN(visitsReqNum) && visitsReqNum > 0 ? visitsReqNum : 8;
+
   const updatedOffer = db.updateShopOffer(shopId, {
     title: body.title,
     description: body.description,
-    visitsRequired: Number(body.visitsRequired) || 8,
+    visitsRequired,
     expiryDays: Number(body.expiryDays) || 30,
     expiryDate: body.expiryDate || undefined,
     image: body.image,
