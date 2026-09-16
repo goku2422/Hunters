@@ -396,18 +396,19 @@ class DatabaseStore {
     };
   }
 
-  public updateShopOffer(shopId: string, offerData: { title?: string; description?: string; visitsRequired?: number; expiryDays?: number }): Offer {
+  public updateShopOffer(shopId: string, offerData: { title?: string; description?: string; visitsRequired?: number; expiryDays?: number; image?: string; terms?: string; discountPercent?: number; isActive?: boolean }): Offer {
     let offer = this.data.offers.find((o) => o.id === shopId || o.id === `offer-${shopId}`);
     if (!offer) {
       offer = {
         id: `offer-${shopId}`,
         title: offerData.title || 'Get 5% discount on your total bill after 8 visits',
-        discountPercent: 15,
+        discountPercent: offerData.discountPercent ?? 15,
         description: offerData.description || 'Special reward for loyal customers.',
-        terms: 'Valid on single bill.',
-        isActive: true,
+        terms: offerData.terms || 'Valid on single bill.',
+        isActive: offerData.isActive ?? true,
         visitsRequired: offerData.visitsRequired || 8,
         expiryDays: offerData.expiryDays || 30,
+        image: offerData.image || '',
         createdAt: new Date().toISOString(),
       };
       this.data.offers.push(offer);
@@ -416,6 +417,10 @@ class DatabaseStore {
       if (offerData.description !== undefined) offer.description = offerData.description;
       if (offerData.visitsRequired !== undefined) offer.visitsRequired = offerData.visitsRequired;
       if (offerData.expiryDays !== undefined) offer.expiryDays = offerData.expiryDays;
+      if (offerData.image !== undefined) offer.image = offerData.image;
+      if (offerData.terms !== undefined) offer.terms = offerData.terms;
+      if (offerData.discountPercent !== undefined) offer.discountPercent = offerData.discountPercent;
+      if (offerData.isActive !== undefined) offer.isActive = offerData.isActive;
     }
     this.saveToDisk();
     return offer;

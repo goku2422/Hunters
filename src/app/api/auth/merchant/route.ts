@@ -105,6 +105,53 @@ export async function GET(req: NextRequest) {
   });
 }
 
+export async function PUT(req: NextRequest) {
+  const token =
+    req.cookies.get('merchant_token')?.value ||
+    req.headers.get('authorization')?.replace('Bearer ', '');
+
+  const session = verifyToken(token);
+  if (!session || session.type !== 'merchant') {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const merchant = db.getMerchantById(session.id);
+  const shop = session.shopId ? db.getShopById(session.shopId) : undefined;
+
+  let updatedShop = shop;
+  if (shop && body.shop) {
+    updatedShop = db.saveShop({
+      ...shop,
+      name: body.shop.name ?? shop.name,
+      address: body.shop.address ?? shop.address,
+      phone: body.shop.phone ?? shop.phone,
+      category: body.shop.category ?? shop.category,
+      latitude: body.shop.latitude !== undefined ? Number(body.shop.latitude) : shop.latitude,
+      longitude: body.shop.longitude !== undefined ? Number(body.shop.longitude) : shop.longitude,
+    });
+  }
+
+  let updatedMerchant = merchant;
+  if (merchant && body.merchant) {
+    updatedMerchant = db.saveMerchant({
+      ...merchant,
+      name: body.merchant.name ?? merchant.name,
+      phone: body.merchant.phone ?? merchant.phone,
+      email: body.merchant.email ?? merchant.email,
+      shopId: merchant.shopId,
+      passwordHash: merchant.passwordHash,
+    });
+  }
+
+  return NextResponse.json({
+    success: true,
+    message: 'Profile updated successfully',
+    merchant: updatedMerchant,
+    shop: updatedShop,
+  });
+}
+
 export async function DELETE() {
   const res = NextResponse.json({ success: true, message: 'Logged out' });
   res.cookies.delete('merchant_token');

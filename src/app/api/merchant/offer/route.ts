@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
     description: body.description,
     visitsRequired: Number(body.visitsRequired) || 8,
     expiryDays: Number(body.expiryDays) || 30,
+    image: body.image,
+    terms: body.terms,
+    discountPercent: body.discountPercent ? Number(body.discountPercent) : undefined,
+    isActive: body.isActive,
   });
 
   return NextResponse.json({
