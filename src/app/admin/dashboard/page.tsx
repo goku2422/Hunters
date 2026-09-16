@@ -284,19 +284,53 @@ export default function AdminDashboardPage() {
         createdAt: isEditing ? (editingShop?.createdAt || new Date().toISOString()) : new Date().toISOString(),
       };
 
-      // 1. Immediately update React state & localStorage
+      const defaultMerchant = {
+        id: `merchant-${shopId}`,
+        shopId: shopId,
+        email: `manager@${slug}.com`,
+        name: `${targetShop.name} Manager`,
+        passwordHash: 'shop123',
+        phone: targetShop.phone,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+
+      const shopWithMerchant = {
+        ...targetShop,
+        merchant: defaultMerchant,
+      };
+
+      // 1. Immediately update React state & localStorage for Shops
       setShops((prevShops) => {
         const idx = prevShops.findIndex((s) => s.id === shopId);
         let updated: any[];
         if (idx >= 0) {
           updated = [...prevShops];
-          updated[idx] = { ...updated[idx], ...targetShop };
+          updated[idx] = { ...updated[idx], ...shopWithMerchant };
         } else {
-          updated = [targetShop, ...prevShops];
+          updated = [shopWithMerchant, ...prevShops];
         }
         saveLocalShops(updated);
         return updated;
       });
+
+      // Also update Merchants state & localStorage
+      if (!isEditing) {
+        setMerchants((prevMerchants) => {
+          const idx = prevMerchants.findIndex((m) => m.id === defaultMerchant.id || m.shopId === shopId);
+          let updated: any[];
+          if (idx >= 0) {
+            updated = [...prevMerchants];
+            updated[idx] = { ...updated[idx], ...defaultMerchant };
+          } else {
+            updated = [defaultMerchant, ...prevMerchants];
+          }
+          saveLocalMerchants(updated);
+          return updated;
+        });
+      }
+
+      setMerchantForm((prev) => ({ ...prev, shopId }));
 
       // 2. Reset modal & form immediately without refreshing page
       setIsAddShopModalOpen(false);
@@ -315,11 +349,37 @@ export default function AdminDashboardPage() {
       // 3. Send API sync request to backend silently
       const url = '/api/admin/shops';
       const method = isEditing ? 'PUT' : 'POST';
-      fetch(url, {
+      const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(targetShop),
-      }).catch((err) => console.error('API shop sync notice:', err));
+      });
+      const data = await res.json();
+      if (data.success && data.shop) {
+        const apiShop = data.shop;
+        const apiMerchant = data.merchant || apiShop.merchant;
+
+        setShops((prevShops) => {
+          const updated = prevShops.map((s) => (s.id === shopId ? { ...s, ...apiShop } : s));
+          saveLocalShops(updated);
+          return updated;
+        });
+
+        if (apiMerchant) {
+          setMerchants((prevMerchants) => {
+            const idx = prevMerchants.findIndex((m) => m.id === apiMerchant.id || m.shopId === shopId);
+            let updated: any[];
+            if (idx >= 0) {
+              updated = [...prevMerchants];
+              updated[idx] = { ...updated[idx], ...apiMerchant };
+            } else {
+              updated = [apiMerchant, ...prevMerchants];
+            }
+            saveLocalMerchants(updated);
+            return updated;
+          });
+        }
+      }
 
       alert(`Shop "${targetShop.name}" ${isEditing ? 'updated' : 'created'} successfully!`);
     } catch (err) {
@@ -671,14 +731,17 @@ export default function AdminDashboardPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {shop.merchant ? (
-                          <div>
-                            <span className="font-semibold text-slate-800">{shop.merchant.name}</span>
-                            <div className="text-[11px] text-slate-400 font-mono">{shop.merchant.email}</div>
-                          </div>
-                        ) : (
-                          <span className="text-amber-600 italic">No merchant assigned</span>
-                        )}
+                        {(() => {
+                          const m = shop.merchant || merchants.find((x) => x.shopId === shop.id);
+                          return m ? (
+                            <div>
+                              <span className="font-semibold text-slate-800">{m.name}</span>
+                              <div className="text-[11px] text-slate-400 font-mono">{m.email}</div>
+                            </div>
+                          ) : (
+                            <span className="text-amber-600 italic">No merchant assigned</span>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">

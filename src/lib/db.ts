@@ -220,7 +220,7 @@ class DatabaseStore {
     } else {
       const slug = shopData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       shop = {
-        id: `shop-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
+        id: shopData.id || `shop-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
         name: shopData.name,
         slug: shopData.slug || slug,
         category: shopData.category || 'Retail Store',
@@ -295,7 +295,7 @@ class DatabaseStore {
       this.data.merchants[existingIndex] = merchant;
     } else {
       merchant = {
-        id: `merchant-${Date.now().toString(36)}`,
+        id: merchantData.id || `merchant-${Date.now().toString(36)}`,
         shopId: merchantData.shopId,
         email: merchantData.email,
         passwordHash: merchantData.passwordHash,

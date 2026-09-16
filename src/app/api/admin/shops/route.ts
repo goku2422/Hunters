@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
   }
 
   const shop = db.saveShop({
+    id: body.id,
     name: body.name,
     category: body.category || 'Retail Store',
     address: body.address,
@@ -62,9 +63,33 @@ export async function POST(req: NextRequest) {
     radiusMeters: parseInt(body.radiusMeters) || 75,
     wifiIp: body.wifiIp || '',
     isActive: body.isActive ?? true,
+    slug: body.slug,
   });
 
-  return NextResponse.json({ success: true, shop });
+  let merchant = db.getMerchantByShopId(shop.id);
+  if (!merchant) {
+    const slug = shop.slug || shop.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    merchant = db.saveMerchant({
+      id: `merchant-${shop.id}`,
+      shopId: shop.id,
+      email: `manager@${slug}.com`,
+      name: `${shop.name} Manager`,
+      passwordHash: 'shop123',
+      phone: shop.phone,
+      isActive: true,
+    });
+  }
+
+  const shopWithMerchant = {
+    ...shop,
+    merchant,
+    totalClaims: 0,
+    acceptedClaims: 0,
+    pendingClaims: 0,
+    isCounterOnline: false,
+  };
+
+  return NextResponse.json({ success: true, shop: shopWithMerchant, merchant });
 }
 
 export async function PUT(req: NextRequest) {
@@ -89,7 +114,26 @@ export async function PUT(req: NextRequest) {
     radiusMeters: parseInt(body.radiusMeters) || 75,
   });
 
-  return NextResponse.json({ success: true, shop });
+  let merchant = db.getMerchantByShopId(shop.id);
+  if (!merchant) {
+    const slug = shop.slug || shop.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    merchant = db.saveMerchant({
+      id: `merchant-${shop.id}`,
+      shopId: shop.id,
+      email: `manager@${slug}.com`,
+      name: `${shop.name} Manager`,
+      passwordHash: 'shop123',
+      phone: shop.phone,
+      isActive: true,
+    });
+  }
+
+  const shopWithMerchant = {
+    ...shop,
+    merchant,
+  };
+
+  return NextResponse.json({ success: true, shop: shopWithMerchant, merchant });
 }
 
 export async function DELETE(req: NextRequest) {
