@@ -15,9 +15,9 @@ export async function GET(
   return NextResponse.json({
     success: true,
     claim,
-    stampCount: Math.max(1, stampCount), // Minimum 1 stamp when looking at this claim
+    stampCount,
     targetStamps: 5,
-    xpEarned: Math.max(1, stampCount) * 10,
+    xpEarned: stampCount * 10,
   });
 }
 
@@ -47,14 +47,14 @@ export async function PATCH(
       );
     }
 
-    const stampCount = claim ? db.getCustomerStampCount(claim.customerMobile, claim.shopId) : 1;
+    const stampCount = claim ? db.getCustomerStampCount(claim.customerMobile, claim.shopId) : 0;
 
     return NextResponse.json({
       success: true,
       claim,
-      stampCount: Math.max(1, stampCount),
+      stampCount,
       targetStamps: 5,
-      xpEarned: Math.max(1, stampCount) * 10,
+      xpEarned: stampCount * 10,
     });
   } catch (error) {
     console.error('Error updating claim:', error);

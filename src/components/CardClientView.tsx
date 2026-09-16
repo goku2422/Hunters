@@ -180,10 +180,11 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
 
   // Poll for live stamp count updates every 2 seconds when logged in
   useEffect(() => {
-    if (!shopSlug || !mobile || !isLoggedIn) return;
+    const targetMobile = mobile || (typeof window !== "undefined" ? localStorage.getItem("customer_mobile") || "" : "");
+    if (!shopSlug || !targetMobile) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/shop-by-slug?slug=${encodeURIComponent(shopSlug)}&mobile=${encodeURIComponent(mobile)}`);
+        const res = await fetch(`/api/shop-by-slug?slug=${encodeURIComponent(shopSlug)}&mobile=${encodeURIComponent(targetMobile)}`);
         const data = await res.json();
         if (data.success && data.stampsCount !== undefined) {
           setStampsCount(data.stampsCount);
@@ -209,13 +210,16 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
       return;
     }
 
+    setName(name.trim());
+    setMobile(cleanMob);
+    setIsLoggedIn(true);
+
     if (typeof window !== "undefined") {
       localStorage.setItem("customer_name", name.trim());
       localStorage.setItem("customer_mobile", cleanMob);
       localStorage.setItem("drutoCustomer", JSON.stringify({ name: name.trim(), mobile: cleanMob }));
     }
 
-    setIsLoggedIn(true);
     setShowLoginModal(false);
 
     if (shop?.id) {
@@ -440,29 +444,30 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
                   const isEarned = stampNum <= stampsCount;
                   const isLast = stampNum === (offer.visitsRequired || 8);
 
-                  if (isEarned) {
-                    return (
-                      <div
-                        key={stampNum}
-                        className="w-12 h-12 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-purple-600/30 transition-all scale-105 border border-purple-400/30"
-                        title={`Stamp #${stampNum} Collected`}
-                      >
-                        <Check className="w-5 h-5 stroke-[3]" />
-                      </div>
-                    );
-                  }
-
                   return (
-                    <div
-                      key={stampNum}
-                      className={`w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center font-bold text-xs shadow-xs transition-all ${
-                        isLast
-                          ? "border-purple-500/50 bg-purple-500/10 text-purple-300"
-                          : "border-slate-700 bg-slate-900/60 text-slate-500"
-                      }`}
-                      title={`Stamp #${stampNum}`}
-                    >
-                      {isLast ? <Gift className="w-5 h-5" /> : stampNum}
+                    <div key={stampNum} className="flex flex-col items-center gap-1">
+                      {isEarned ? (
+                        <div
+                          className="w-12 h-12 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-purple-600/30 transition-all scale-105 border border-purple-400/30"
+                          title={`Stamp #${stampNum} (Day ${stampNum}) Collected`}
+                        >
+                          <Check className="w-5 h-5 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <div
+                          className={`w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center font-bold text-xs shadow-xs transition-all ${
+                            isLast
+                              ? "border-purple-500/50 bg-purple-500/10 text-purple-300"
+                              : "border-slate-700 bg-slate-900/60 text-slate-500"
+                          }`}
+                          title={`Stamp #${stampNum} (Day ${stampNum})`}
+                        >
+                          {isLast ? <Gift className="w-5 h-5" /> : stampNum}
+                        </div>
+                      )}
+                      <span className={`text-[10px] font-bold ${isEarned ? "text-purple-300" : "text-slate-500"}`}>
+                        Day {stampNum}
+                      </span>
                     </div>
                   );
                 })}
@@ -529,10 +534,19 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
               <div className="my-4">
                 <ScratchCard
                   claim={createdClaim}
-                  onStatusUpdated={(updatedClaim) => {
+                  onStatusUpdated={async (updatedClaim) => {
                     setCreatedClaim(updatedClaim);
                     if (updatedClaim.status === "ACCEPTED") {
-                      setStampsCount((prev) => Math.max(prev + 1, 1));
+                      const mob = mobile || (typeof window !== "undefined" ? localStorage.getItem("customer_mobile") || "" : "");
+                      if (mob && shopSlug) {
+                        try {
+                          const res = await fetch(`/api/shop-by-slug?slug=${encodeURIComponent(shopSlug)}&mobile=${encodeURIComponent(mob)}`);
+                          const data = await res.json();
+                          if (data.success && data.stampsCount !== undefined) {
+                            setStampsCount(data.stampsCount);
+                          }
+                        } catch {}
+                      }
                     }
                   }}
                 />
