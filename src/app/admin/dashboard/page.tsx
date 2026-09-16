@@ -128,8 +128,8 @@ export default function AdminDashboardPage() {
   }, []);
 
   // Fetch all admin data & merge with localStorage
-  const fetchAdminData = useCallback(async () => {
-    setIsRefreshing(true);
+  const fetchAdminData = useCallback(async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
     const ts = Date.now();
     const fetchOptions: RequestInit = { cache: 'no-store' };
     try {
@@ -198,7 +198,9 @@ export default function AdminDashboardPage() {
       console.error('Error fetching admin data:', err);
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
+      if (isManual) {
+        setTimeout(() => setIsRefreshing(false), 500);
+      }
     }
   }, [router]);
 
@@ -551,7 +553,7 @@ export default function AdminDashboardPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={fetchAdminData}
+              onClick={() => fetchAdminData(true)}
               disabled={isRefreshing}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold shadow-xs transition-all border border-white/10 disabled:opacity-50"
               title="Refresh All Admin Data"
