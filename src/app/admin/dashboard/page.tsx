@@ -82,25 +82,30 @@ export default function AdminDashboardPage() {
   });
 
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Fetch all admin data
   const fetchAdminData = useCallback(async () => {
+    setIsRefreshing(true);
+    const ts = Date.now();
+    const fetchOptions: RequestInit = { cache: 'no-store' };
     try {
       // Check auth
-      const authRes = await fetch('/api/auth/admin');
+      const authRes = await fetch(`/api/auth/admin?_t=${ts}`, fetchOptions);
       if (!authRes.ok) {
         router.push('/admin/login');
         return;
       }
 
       // Fetch stats
-      const statsRes = await fetch('/api/admin/stats');
+      const statsRes = await fetch(`/api/admin/stats?_t=${ts}`, fetchOptions);
       const statsData = await statsRes.json();
       if (statsData.success) {
         setStats(statsData.stats);
       }
 
       // Fetch shops
-      const shopsRes = await fetch('/api/admin/shops');
+      const shopsRes = await fetch(`/api/admin/shops?_t=${ts}`, fetchOptions);
       const shopsData = await shopsRes.json();
       if (shopsData.success) {
         setShops(shopsData.shops);
@@ -113,14 +118,14 @@ export default function AdminDashboardPage() {
       }
 
       // Fetch merchants
-      const merchantsRes = await fetch('/api/admin/merchants');
+      const merchantsRes = await fetch(`/api/admin/merchants?_t=${ts}`, fetchOptions);
       const merchantsData = await merchantsRes.json();
       if (merchantsData.success) {
         setMerchants(merchantsData.merchants);
       }
 
       // Fetch claims
-      const claimsRes = await fetch('/api/claims');
+      const claimsRes = await fetch(`/api/claims?_t=${ts}`, fetchOptions);
       const claimsData = await claimsRes.json();
       if (claimsData.success) {
         setClaims(claimsData.claims);
@@ -129,6 +134,7 @@ export default function AdminDashboardPage() {
       console.error('Error fetching admin data:', err);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, [router]);
 
@@ -361,6 +367,17 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={fetchAdminData}
+              disabled={isRefreshing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold shadow-xs transition-all border border-white/10 disabled:opacity-50"
+              title="Refresh All Admin Data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-amber-400' : 'text-slate-300'}`} />
+              <span>{isRefreshing ? 'Refreshing...' : 'Refresh Data'}</span>
+            </button>
+
             <Link
               href="/admin/qr-stand"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-all"

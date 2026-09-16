@@ -3,6 +3,9 @@ import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 import QRCode from "qrcode";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 function resolveBaseUrl(req: NextRequest): string {
   const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
   const proto = req.headers.get("x-forwarded-proto") || (host?.includes("localhost") ? "http" : "https");
