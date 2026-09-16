@@ -17,28 +17,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  let shops = db.getShops();
-  if (!shops || shops.length === 0) {
-    shops = INITIAL_SHOPS;
-  }
-
-  // Find shop by slug, id, normalized name, or partial keyword match
-  const shop =
-    shops.find(
-      (s) =>
-        s.isActive &&
-        (s.slug?.toLowerCase() === cleanSlug ||
-          s.id?.toLowerCase() === cleanSlug ||
-          s.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === cleanSlug ||
-          (cleanSlug && s.slug?.toLowerCase().includes(cleanSlug)) ||
-          (cleanSlug && cleanSlug.includes(s.slug?.toLowerCase() || "")))
-    ) ||
-    shops.find(
-      (s) =>
-        s.slug?.toLowerCase() === cleanSlug ||
-        s.id?.toLowerCase() === cleanSlug ||
-        (cleanSlug && s.name?.toLowerCase().includes(cleanSlug))
-    );
+  const shop = db.getShopById(cleanSlug);
 
   if (!shop) {
     return NextResponse.json(

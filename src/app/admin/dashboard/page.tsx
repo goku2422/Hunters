@@ -217,7 +217,7 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
-  // Show QR modal for a shop
+  // Show QR modal for a shop or merchant
   const handleShowQr = async (shop: any) => {
     setQrModalShop(shop);
     setIsLoadingQr(true);
@@ -225,8 +225,8 @@ export default function AdminDashboardPage() {
     setQrUrl(null);
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-      const shopSlug = shop.slug || shop.id;
-      const targetQrUrl = `${origin}/shop/${shopSlug}`;
+      const targetId = shop.merchantId || shop.id || shop.slug;
+      const targetQrUrl = `${origin}/scan/${targetId}`;
 
       const QRCode = (await import('qrcode')).default;
       const dataUrl = await QRCode.toDataURL(targetQrUrl, {
@@ -847,39 +847,66 @@ export default function AdminDashboardPage() {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-3.5">Name</th>
+                    <th className="px-6 py-3.5">Manager & ID</th>
                     <th className="px-6 py-3.5">Email (Login)</th>
+                    <th className="px-6 py-3.5">Password</th>
                     <th className="px-6 py-3.5">Assigned Shop</th>
-                    <th className="px-6 py-3.5">Status</th>
                     <th className="px-6 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {merchants.map((m) => (
-                    <tr key={m.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-slate-900">
-                        {m.name}
-                        {m.phone && <div className="text-[11px] text-slate-400 font-normal">{m.phone}</div>}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-slate-600">{m.email}</td>
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          {m.shop?.name || 'Unassigned'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-[11px] font-semibold text-emerald-600">Active</span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleDeleteMerchant(m.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {merchants.map((m) => {
+                    const assignedShop = m.shop || shops.find((s) => s.id === m.shopId);
+                    return (
+                      <tr key={m.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-900">
+                          {m.name}
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">{m.id}</div>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-slate-600 font-medium">{m.email}</td>
+                        <td className="px-6 py-4 font-mono font-bold text-indigo-600">
+                          {m.passwordHash || m.password || 'shop123'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+                            {assignedShop?.name || 'Unassigned Shop'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
+                          <button
+                            onClick={() => handleShowQr({ ...assignedShop, merchantId: m.id, name: assignedShop?.name || m.name })}
+                            className="px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-200 rounded-lg inline-flex items-center gap-1 transition-all"
+                            title="Generate Unique Merchant QR Code"
+                          >
+                            <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>QR Code</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                              const creds = `Store: ${assignedShop?.name || m.name}\nMerchant ID: ${m.id}\nLogin Email: ${m.email}\nPassword: ${m.passwordHash || m.password || 'shop123'}\nScan QR Link: ${origin}/scan/${m.id}`;
+                              navigator.clipboard.writeText(creds);
+                              alert(`Credentials copied for ${m.name}:\n\n${creds}`);
+                            }}
+                            className="px-2.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg inline-flex items-center gap-1 transition-all"
+                            title="Copy Merchant Login Credentials"
+                          >
+                            <Copy className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>Copy Login Info</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteMerchant(m.id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
+                            title="Delete Merchant"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

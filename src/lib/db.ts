@@ -194,15 +194,26 @@ class DatabaseStore {
   public getShopById(id?: string): Shop | undefined {
     if (!id || !id.trim()) return undefined;
     const cleanId = id.trim().toLowerCase();
-    return (
+    const foundDirect =
       this.data.shops.find((s) => s.id === id) ||
       this.data.shops.find(
         (s) =>
           s.id.toLowerCase() === cleanId ||
           s.slug?.toLowerCase() === cleanId ||
           s.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') === cleanId
-      )
+      );
+    if (foundDirect) return foundDirect;
+
+    const merchant = this.data.merchants.find(
+      (m) =>
+        m.id.toLowerCase() === cleanId ||
+        m.email.toLowerCase() === cleanId ||
+        m.shopId.toLowerCase() === cleanId
     );
+    if (merchant) {
+      return this.data.shops.find((s) => s.id === merchant.shopId || s.slug === merchant.shopId);
+    }
+    return undefined;
   }
 
   public saveShop(shopData: Partial<Shop> & { name: string; address: string; phone: string; latitude: number; longitude: number }): Shop {
