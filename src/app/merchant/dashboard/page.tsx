@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -313,7 +313,7 @@ export default function MerchantDashboardPage() {
               <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                 <MapPin className="w-3.5 h-3.5 text-slate-400" />
                 <span className="truncate max-w-xs">{shop?.address}</span>
-                <span className="mx-1">•</span>
+                <span className="mx-1">â€¢</span>
                 <span className="text-slate-600 font-medium">{merchant?.name}</span>
               </div>
             </div>
@@ -417,13 +417,13 @@ export default function MerchantDashboardPage() {
                   </h3>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-amber-100 mt-1">
                     <span className="font-mono font-medium">+91 {incomingClaimAlert.customerMobile}</span>
-                    <span>•</span>
+                    <span>â€¢</span>
                     <span className="font-semibold bg-white/25 px-2 py-0.5 rounded">
                       10% Flat Discount
                     </span>
-                    <span>•</span>
+                    <span>â€¢</span>
                     <span className="font-mono">{incomingClaimAlert.claimCode}</span>
-                    <span>•</span>
+                    <span>â€¢</span>
                     <span className="text-amber-200">
                       Via: {incomingClaimAlert.identificationMethod}
                       {incomingClaimAlert.distanceMeters !== undefined && ` (${incomingClaimAlert.distanceMeters}m)`}
@@ -606,7 +606,7 @@ export default function MerchantDashboardPage() {
                           {c.claimCode}
                         </td>
                         <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
-                          {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} •{' '}
+                          {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} â€¢{' '}
                           {new Date(c.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4">
@@ -795,7 +795,7 @@ function MerchantHomeView({ shop, claims, onAccept, onRedeem, onReject }: { shop
 
   return <main className="min-h-[calc(100vh-60px)] bg-[#f3f7f6] pb-4 text-[#142033]">
     <section className="rounded-b-[26px] bg-gradient-to-br from-[#123c46] to-[#1f6970] px-5 pb-5 pt-7 text-white shadow-lg shadow-[#123c46]/20">
-      <div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-[10px] font-black">Kutio</div><div><p className="text-[10px] font-bold uppercase tracking-wider text-white/75">Good afternoon,</p><h1 className="text-base font-black">{shop?.name || 'Your business'}</h1></div></div>
+      <div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-[10px] font-black">Flinty</div><div><p className="text-[10px] font-bold uppercase tracking-wider text-white/75">Good afternoon,</p><h1 className="text-base font-black">{shop?.name || 'Your business'}</h1></div></div>
       <div className="mt-5 grid grid-cols-3 gap-2"><div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center"><Clock className="mx-auto h-4 w-4" /><b className="mt-1 block text-lg leading-5">{pendingClaims.length}</b><span className="text-[8px] font-bold uppercase tracking-wider text-white/75">Pending</span></div><div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center"><Users className="mx-auto h-4 w-4" /><b className="mt-1 block text-lg leading-5">{claims.length}</b><span className="text-[8px] font-bold uppercase tracking-wider text-white/75">Customers</span></div><div className="rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-center"><QrCode className="mx-auto h-4 w-4" /><b className="mt-1 block text-lg leading-5">Live</b><span className="text-[8px] font-bold uppercase tracking-wider text-white/75">QR Status</span></div></div>
     </section>
 
@@ -1053,3 +1053,4 @@ function FilterButton({ label, active, onClick }: { label: string; active: boole
 function formatRelative(date: Date) { const minutes = Math.max(1, Math.round((Date.now() - date.getTime()) / 60000)); return minutes < 60 ? `${minutes} min ago` : `${Math.round(minutes / 60)} hr ago`; }
 function EmptyMerchantPanel({ text }: { text: string }) { return <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{text}</div>; }
 function Metric({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-2 text-3xl font-black text-slate-900">{value}</p></div>; }
+

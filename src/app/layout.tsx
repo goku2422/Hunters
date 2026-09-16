@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ScratchEase | Digital Scratch Card & Shop Offer Network',
+  title: 'Flinty | Digital Loyalty & Scratch Card Network',
   description: 'One Common QR Code network for retail scratch card offers and merchant counter notifications.',
 };
 
