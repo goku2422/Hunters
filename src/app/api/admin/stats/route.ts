@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     success: true,
     stats,
     totalCustomersCount: customers.length,
+    customers,
     recentClaims,
   });
 }

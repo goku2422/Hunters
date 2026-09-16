@@ -145,6 +145,9 @@ export default function AdminDashboardPage() {
       const statsData = await statsRes.json();
       if (statsData.success) {
         setStats(statsData.stats);
+        if (statsData.customers) {
+          setCustomers(statsData.customers);
+        }
       }
 
       // Fetch shops from API & merge with localStorage
@@ -398,6 +401,12 @@ export default function AdminDashboardPage() {
         return updated;
       });
 
+      setMerchants((prevMerchants) => {
+        const updated = prevMerchants.filter((m) => m.shopId !== shopId);
+        saveLocalMerchants(updated);
+        return updated;
+      });
+
       fetch(`/api/admin/shops?id=${shopId}`, { method: 'DELETE' }).catch(() => {});
     } catch (err) {
       console.error('Failed to delete shop:', err);
@@ -446,6 +455,12 @@ export default function AdminDashboardPage() {
       setMerchants((prev) => {
         const updated = [newMerchant, ...prev];
         saveLocalMerchants(updated);
+        return updated;
+      });
+
+      setShops((prevShops) => {
+        const updated = prevShops.map((s) => (s.id === targetShopId ? { ...s, merchant: newMerchant } : s));
+        saveLocalShops(updated);
         return updated;
       });
 
@@ -583,7 +598,7 @@ export default function AdminDashboardPage() {
 
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
             <div className="text-[11px] font-semibold text-slate-500 uppercase">Customers</div>
-            <div className="text-2xl font-black text-indigo-600 mt-1">{stats?.totalCustomers || 2}</div>
+            <div className="text-2xl font-black text-indigo-600 mt-1">{stats?.totalCustomers ?? customers.length}</div>
             <div className="text-[10px] text-slate-400 mt-0.5">Unique mobile users</div>
           </div>
 
@@ -642,6 +657,18 @@ export default function AdminDashboardPage() {
           >
             <Award className="w-4 h-4" />
             <span>Global Claims Feed ({claims.length})</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('CUSTOMERS')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+              currentTab === 'CUSTOMERS'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-4 h-4 text-indigo-400" />
+            <span>Customers ({customers.length})</span>
           </button>
 
           <button
@@ -949,7 +976,62 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 4: OFFERS ENGINE */}
+        {/* TAB 4: CUSTOMERS DIRECTORY */}
+        {currentTab === 'CUSTOMERS' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Registered Customer Network</h2>
+                <p className="text-xs text-slate-500">Every customer mobile user who has scanned QR codes or claimed rewards.</p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-3.5">Customer Name</th>
+                    <th className="px-6 py-3.5">Mobile Number</th>
+                    <th className="px-6 py-3.5">Registered On</th>
+                    <th className="px-6 py-3.5">Total Claims</th>
+                    <th className="px-6 py-3.5">Account Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {customers.map((c) => {
+                    const customerClaims = claims.filter(
+                      (cl) => cl.customerMobile === c.mobile || cl.customerId === c.id
+                    );
+                    return (
+                      <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-900">{c.name || 'Anonymous User'}</td>
+                        <td className="px-6 py-4 font-mono text-slate-600">+91 {c.mobile}</td>
+                        <td className="px-6 py-4 text-slate-500">
+                          {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 font-bold text-indigo-600">{customerClaims.length} claims</td>
+                        <td className="px-6 py-4">
+                          <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            Active User
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {customers.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                        No registered customers found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: OFFERS ENGINE */}
         {currentTab === 'OFFERS' && (
           <div className="space-y-4">
             <div>
