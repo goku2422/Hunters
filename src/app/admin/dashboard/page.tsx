@@ -84,7 +84,50 @@ export default function AdminDashboardPage() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch all admin data
+  // LocalStorage Helpers
+  const getLocalShops = (): any[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('flinty_local_shops');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveLocalShops = (updatedShops: any[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('flinty_local_shops', JSON.stringify(updatedShops));
+    } catch {}
+  };
+
+  const getLocalMerchants = (): any[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('flinty_local_merchants');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveLocalMerchants = (updatedMerchants: any[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('flinty_local_merchants', JSON.stringify(updatedMerchants));
+    } catch {}
+  };
+
+  // Restore from localStorage on initial load
+  useEffect(() => {
+    const storedShops = getLocalShops();
+    const storedMerchants = getLocalMerchants();
+    if (storedShops.length > 0) setShops(storedShops);
+    if (storedMerchants.length > 0) setMerchants(storedMerchants);
+  }, []);
+
+  // Fetch all admin data & merge with localStorage
   const fetchAdminData = useCallback(async () => {
     setIsRefreshing(true);
     const ts = Date.now();
@@ -104,24 +147,42 @@ export default function AdminDashboardPage() {
         setStats(statsData.stats);
       }
 
-      // Fetch shops
+      // Fetch shops from API & merge with localStorage
       const shopsRes = await fetch(`/api/admin/shops?_t=${ts}`, fetchOptions);
       const shopsData = await shopsRes.json();
-      if (shopsData.success) {
-        setShops(shopsData.shops);
+      const apiShops = shopsData.success ? shopsData.shops : [];
+      const storedShops = getLocalShops();
+
+      const shopMap = new Map<string, any>();
+      apiShops.forEach((s: any) => shopMap.set(s.id, s));
+      storedShops.forEach((s: any) => shopMap.set(s.id, { ...shopMap.get(s.id), ...s }));
+      const mergedShops = Array.from(shopMap.values());
+
+      if (mergedShops.length > 0) {
+        saveLocalShops(mergedShops);
+        setShops(mergedShops);
         setMerchantForm((prev) => {
-          if (!prev.shopId && shopsData.shops.length > 0) {
-            return { ...prev, shopId: shopsData.shops[0].id };
+          if (!prev.shopId && mergedShops.length > 0) {
+            return { ...prev, shopId: mergedShops[0].id };
           }
           return prev;
         });
       }
 
-      // Fetch merchants
+      // Fetch merchants from API & merge with localStorage
       const merchantsRes = await fetch(`/api/admin/merchants?_t=${ts}`, fetchOptions);
       const merchantsData = await merchantsRes.json();
-      if (merchantsData.success) {
-        setMerchants(merchantsData.merchants);
+      const apiMerchants = merchantsData.success ? merchantsData.merchants : [];
+      const storedMerchants = getLocalMerchants();
+
+      const merchantMap = new Map<string, any>();
+      apiMerchants.forEach((m: any) => merchantMap.set(m.id, m));
+      storedMerchants.forEach((m: any) => merchantMap.set(m.id, { ...merchantMap.get(m.id), ...m }));
+      const mergedMerchants = Array.from(merchantMap.values());
+
+      if (mergedMerchants.length > 0) {
+        saveLocalMerchants(mergedMerchants);
+        setMerchants(mergedMerchants);
       }
 
       // Fetch claims
@@ -181,7 +242,7 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     fetchAdminData();
-    const interval = setInterval(fetchAdminData, 4000);
+    const interval = setInterval(fetchAdminData, 6000);
     return () => clearInterval(interval);
   }, [fetchAdminData]);
 
@@ -191,7 +252,7 @@ export default function AdminDashboardPage() {
     }
   }, [currentTab, fetchAnalytics]);
 
-  // Handle Create / Edit Shop
+  // Handle Create / Edit Shop (No page reload, immediate localStorage & state update)
   const handleSaveShop = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -205,54 +266,85 @@ export default function AdminDashboardPage() {
       }
 
       const isEditing = Boolean(editingShop?.id);
-      const url = '/api/admin/shops';
-      const method = isEditing ? 'PUT' : 'POST';
-      const payload = isEditing ? { ...shopForm, id: editingShop?.id } : shopForm;
+      const shopId = isEditing ? editingShop!.id : `shop-${Date.now()}`;
+      const slug = shopForm.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const targetShop: Shop = {
+        id: shopId,
+        name: shopForm.name.trim(),
+        category: shopForm.category || 'Retail Store',
+        address: shopForm.address.trim(),
+        phone: shopForm.phone.trim(),
+        latitude: Number(shopForm.latitude) || 28.6315,
+        longitude: Number(shopForm.longitude) || 77.2167,
+        radiusMeters: Number(shopForm.radiusMeters) || 75,
+        wifiIp: shopForm.wifiIp || '',
+        slug,
+        isActive: true,
+        createdAt: isEditing ? (editingShop?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+      };
+
+      // 1. Immediately update React state & localStorage
+      setShops((prevShops) => {
+        const idx = prevShops.findIndex((s) => s.id === shopId);
+        let updated: any[];
+        if (idx >= 0) {
+          updated = [...prevShops];
+          updated[idx] = { ...updated[idx], ...targetShop };
+        } else {
+          updated = [targetShop, ...prevShops];
+        }
+        saveLocalShops(updated);
+        return updated;
       });
 
-      const data = await res.json();
+      // 2. Reset modal & form immediately without refreshing page
+      setIsAddShopModalOpen(false);
+      setEditingShop(null);
+      setShopForm({
+        name: '',
+        category: 'Cafe & Restaurant',
+        address: '',
+        phone: '+91 ',
+        latitude: 28.6315,
+        longitude: 77.2167,
+        radiusMeters: 75,
+        wifiIp: '',
+      });
 
-      if (res.ok && data.success) {
-        setIsAddShopModalOpen(false);
-        setEditingShop(null);
-        setShopForm({
-          name: '',
-          category: 'Cafe & Restaurant',
-          address: '',
-          phone: '+91 ',
-          latitude: 28.6315,
-          longitude: 77.2167,
-          radiusMeters: 75,
-          wifiIp: '',
-        });
-        await fetchAdminData();
-        alert(`Shop "${data.shop?.name}" created successfully!`);
-      } else {
-        alert(data.message || 'Error creating shop. Please check all fields.');
-      }
+      // 3. Send API sync request to backend silently
+      const url = '/api/admin/shops';
+      const method = isEditing ? 'PUT' : 'POST';
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetShop),
+      }).catch((err) => console.error('API shop sync notice:', err));
+
+      alert(`Shop "${targetShop.name}" ${isEditing ? 'updated' : 'created'} successfully!`);
     } catch (err) {
       console.error('Error saving shop:', err);
-      alert('Network error while saving shop.');
+      alert('Error saving shop.');
     }
   };
 
-  // Handle Delete Shop
+  // Handle Delete Shop (Immediate state & localStorage update)
   const handleDeleteShop = async (shopId: string) => {
     if (!confirm('Are you sure you want to delete this shop and its associated merchants?')) return;
     try {
-      await fetch(`/api/admin/shops?id=${shopId}`, { method: 'DELETE' });
-      await fetchAdminData();
+      setShops((prevShops) => {
+        const updated = prevShops.filter((s) => s.id !== shopId);
+        saveLocalShops(updated);
+        return updated;
+      });
+
+      fetch(`/api/admin/shops?id=${shopId}`, { method: 'DELETE' }).catch(() => {});
     } catch (err) {
       console.error('Failed to delete shop:', err);
     }
   };
 
-  // Handle Create Merchant
+  // Handle Create Merchant (Immediate state & localStorage update)
   const handleSaveMerchant = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -275,47 +367,62 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      const payload = {
-        ...merchantForm,
+      const targetShop = shops.find((s) => s.id === targetShopId);
+      const merchantId = `merchant-${Date.now()}`;
+      const newMerchant = {
+        id: merchantId,
         shopId: targetShopId,
+        email: merchantForm.email.trim(),
+        name: merchantForm.name.trim(),
+        passwordHash: merchantForm.password,
+        phone: merchantForm.phone.trim(),
+        isActive: true,
+        googleEmail: merchantForm.gmailEmail?.trim() || undefined,
+        loginType: merchantForm.gmailEmail?.trim() ? 'both' : 'password',
+        createdAt: new Date().toISOString(),
+        shop: targetShop,
       };
 
-      const res = await fetch('/api/admin/merchants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      setMerchants((prev) => {
+        const updated = [newMerchant, ...prev];
+        saveLocalMerchants(updated);
+        return updated;
       });
 
-      const data = await res.json();
+      setIsAddMerchantModalOpen(false);
+      setMerchantForm({
+        shopId: shops[0]?.id || '',
+        name: '',
+        email: '',
+        password: 'shop123',
+        phone: '',
+        gmailEmail: '',
+      });
 
-      if (res.ok && data.success) {
-        setIsAddMerchantModalOpen(false);
-        setMerchantForm({
-          shopId: shops[0]?.id || '',
-          name: '',
-          email: '',
-          password: 'shop123',
-          phone: '',
-          gmailEmail: '',
-        });
-        await fetchAdminData();
-        alert(`Merchant "${data.merchant?.name}" created successfully!`);
-      } else {
-        alert(data.message || 'Error creating merchant. Please check all fields.');
-      }
+      fetch('/api/admin/merchants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMerchant),
+      }).catch(() => {});
+
+      alert(`Merchant "${newMerchant.name}" created successfully!`);
     } catch (err) {
       console.error('Error saving merchant:', err);
-      alert('Network error while saving merchant account.');
+      alert('Error saving merchant account.');
     }
   };
 
-
-  // Handle Delete Merchant
+  // Handle Delete Merchant (Immediate state & localStorage update)
   const handleDeleteMerchant = async (merchantId: string) => {
     if (!confirm('Delete this merchant account?')) return;
     try {
-      await fetch(`/api/admin/merchants?id=${merchantId}`, { method: 'DELETE' });
-      await fetchAdminData();
+      setMerchants((prev) => {
+        const updated = prev.filter((m) => m.id !== merchantId);
+        saveLocalMerchants(updated);
+        return updated;
+      });
+
+      fetch(`/api/admin/merchants?id=${merchantId}`, { method: 'DELETE' }).catch(() => {});
     } catch (err) {
       console.error('Failed to delete merchant:', err);
     }

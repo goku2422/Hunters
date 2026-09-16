@@ -64,7 +64,22 @@ export default function CustomerDashboardPage() {
                     customer.mobile ? fetch(`/api/claims?mobile=${encodeURIComponent(customer.mobile)}`) : Promise.resolve(null),
                 ]);
                 const shopsData = await shopsResponse.json();
-                if (shopsData.success) setShops(shopsData.shops);
+                let fetchedShops: CustomerShop[] = shopsData.success ? shopsData.shops : [];
+
+                if (typeof window !== 'undefined') {
+                    try {
+                        const localRaw = localStorage.getItem('flinty_local_shops');
+                        if (localRaw) {
+                            const localShops = JSON.parse(localRaw);
+                            const map = new Map<string, CustomerShop>();
+                            fetchedShops.forEach((s) => map.set(s.id, s));
+                            localShops.forEach((s: any) => map.set(s.id, { ...map.get(s.id), ...s }));
+                            fetchedShops = Array.from(map.values());
+                        }
+                    } catch {}
+                }
+
+                setShops(fetchedShops);
                 if (claimsResponse) {
                     const claimsData = await claimsResponse.json();
                     if (claimsData.success) setClaims(claimsData.claims);

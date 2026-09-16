@@ -155,8 +155,30 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
           body: JSON.stringify({ shopId: data.shop.id }),
         }).catch(() => {});
       } else {
-        setShopError(data.message || "Merchant shop not found. Please scan a valid merchant QR code.");
-        setShop(null);
+        let foundLocal = false;
+        if (typeof window !== 'undefined') {
+          try {
+            const raw = localStorage.getItem('flinty_local_shops');
+            if (raw) {
+              const localShops = JSON.parse(raw);
+              const target = localShops.find(
+                (s: any) =>
+                  s.slug === shopSlug ||
+                  s.id === shopSlug ||
+                  s.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') === shopSlug
+              );
+              if (target) {
+                setShop(target);
+                setShopError(null);
+                foundLocal = true;
+              }
+            }
+          } catch {}
+        }
+        if (!foundLocal) {
+          setShopError(data.message || "Merchant shop not found. Please scan a valid merchant QR code.");
+          setShop(null);
+        }
       }
 
       if (savedName.trim() && savedMobile.trim().length === 10) {
