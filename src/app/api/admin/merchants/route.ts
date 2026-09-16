@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  if (!body.shopId || !body.email || !body.name || !body.password) {
+  const password = body.password || body.passwordHash;
+  if (!body.shopId || !body.email || !body.name || !password) {
     return NextResponse.json(
       { success: false, message: 'Shop ID, email, name, and password are required.' },
       { status: 400 }
@@ -40,13 +41,13 @@ export async function POST(req: NextRequest) {
   const merchant = db.saveMerchant({
     id: body.id,
     shopId: body.shopId,
-    email: body.email,
-    name: body.name,
-    passwordHash: body.password,
+    email: body.email.trim(),
+    name: body.name.trim(),
+    passwordHash: password,
     phone: body.phone,
     isActive: body.isActive ?? true,
-    googleEmail: body.gmailEmail || undefined,
-    loginType: body.gmailEmail ? 'both' : 'password',
+    googleEmail: body.gmailEmail || body.googleEmail || undefined,
+    loginType: body.gmailEmail || body.googleEmail ? 'both' : 'password',
   });
 
   return NextResponse.json({ success: true, merchant });

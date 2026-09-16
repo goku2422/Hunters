@@ -60,10 +60,36 @@ function MerchantLoginInner() {
     }
   };
 
-  const quickLogin = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-  };
+  const [dynamicMerchants, setDynamicMerchants] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadMerchants() {
+      try {
+        const res = await fetch('/api/admin/merchants');
+        const data = await res.json();
+        if (data.success && data.merchants && data.merchants.length > 0) {
+          setDynamicMerchants(data.merchants);
+          return;
+        }
+      } catch (err) {}
+
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('flinty_local_merchants');
+          if (raw) setDynamicMerchants(JSON.parse(raw));
+        } catch {}
+      }
+    }
+    loadMerchants();
+  }, []);
+
+  const merchantList = dynamicMerchants.length > 0
+    ? dynamicMerchants
+    : [
+        { name: 'Store Manager', email: 'brew@shop.com', passwordHash: 'shop123', shop: { name: 'Brew & Bean Cafe' } },
+        { name: 'Store Manager', email: 'urban@shop.com', passwordHash: 'shop123', shop: { name: 'Urban Trend Fashion' } },
+        { name: 'Store Manager', email: 'pizza@shop.com', passwordHash: 'shop123', shop: { name: 'Gourmet Pizza Hub' } },
+      ];
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#0B0F17] text-white selection:bg-purple-900 selection:text-purple-200 relative overflow-hidden">
@@ -169,22 +195,18 @@ function MerchantLoginInner() {
 
         {/* Quick Demo Logins */}
         <div className="mt-6 pt-5 border-t border-violet-500/20">
-          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-3">Quick 1-Click Demo Logins</div>
-          <div className="space-y-2">
-            {[
-              { label: 'Shop A: Brew & Bean Cafe', email: 'brew@shop.com', sub: 'Connaught Place' },
-              { label: 'Shop B: Urban Trend Fashion', email: 'urban@shop.com', sub: 'DLF CyberHub' },
-              { label: 'Shop C: Gourmet Pizza Hub', email: 'pizza@shop.com', sub: 'Bengaluru' },
-            ].map((demo) => (
+          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-3">Quick 1-Click Merchant Logins</div>
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            {merchantList.map((m: any) => (
               <button
-                key={demo.email}
+                key={m.id || m.email}
                 type="button"
-                onClick={() => quickLogin(demo.email, 'shop123')}
+                onClick={() => quickLogin(m.email, m.passwordHash || m.password || 'shop123')}
                 className="w-full p-2.5 rounded-xl border border-violet-500/20 bg-[#0B0F17] hover:bg-[#121826] text-left text-xs flex items-center justify-between transition-colors"
               >
                 <div>
-                  <span className="font-bold text-slate-200">{demo.label}</span>
-                  <div className="text-[11px] text-slate-400">{demo.email} • {demo.sub}</div>
+                  <span className="font-bold text-slate-200">{m.shop?.name || m.name || 'Partner Shop'}</span>
+                  <div className="text-[11px] text-slate-400">{m.email}</div>
                 </div>
                 <span className="text-[10px] font-semibold text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/30">Select</span>
               </button>

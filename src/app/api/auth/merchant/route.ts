@@ -4,17 +4,19 @@ import { createToken, verifyToken } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const cleanEmail = body.email ? body.email.trim().toLowerCase() : '';
+    const cleanPassword = body.password ? body.password.trim() : '';
 
-    if (!email || !password) {
+    if (!cleanEmail || !cleanPassword) {
       return NextResponse.json(
         { success: false, message: 'Email and password are required.' },
         { status: 400 }
       );
     }
 
-    const merchant = db.getMerchantByEmail(email);
-    if (!merchant || merchant.passwordHash !== password) {
+    const merchant = db.getMerchantByEmail(cleanEmail);
+    if (!merchant || merchant.passwordHash !== cleanPassword) {
       return NextResponse.json(
         { success: false, message: 'Invalid merchant email or password.' },
         { status: 401 }
