@@ -46,6 +46,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const offer = db.getShopOffer(shop.id);
+    if (db.isOfferExpired(offer)) {
+      return NextResponse.json(
+        { success: false, message: `Reward offer for ${shop.name} has expired and cannot be claimed.` },
+        { status: 400 }
+      );
+    }
+
     // Strict 1-scan-per-day restriction per customer per merchant handled on backend/database
     const existingTodayClaim = db.hasScannedToday(cleanMobile, body.shopId);
     if (existingTodayClaim) {
@@ -54,7 +62,7 @@ export async function POST(req: NextRequest) {
           success: false,
           isDuplicate: true,
           claim: existingTodayClaim,
-          message: `Already scanned today. You can scan ${shop.name}'s QR code again tomorrow.`,
+          message: `Aapne aaj ${shop.name} se stamp claim request already submit kar di hai. Ek din me 1 hi stamp request kar sakte hain.`,
         },
         { status: 429 }
       );

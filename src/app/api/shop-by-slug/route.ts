@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
 
   const offer = db.getShopOffer(shop.id);
   const stampsCount = mobile ? db.getCustomerStampCount(mobile, shop.id) : 0;
+  const isExpired = db.isOfferExpired(offer);
 
   return NextResponse.json({
     success: true,
@@ -65,7 +66,12 @@ export async function GET(req: NextRequest) {
       discountPercent: offer?.discountPercent || 15,
       visitsRequired: offer?.visitsRequired || 8,
       expiryDays: offer?.expiryDays || 30,
+      expiryDate: offer?.expiryDate || "",
       description: offer?.description || "",
+      terms: offer?.terms || "",
+      image: offer?.image || "",
+      isActive: offer?.isActive ?? true,
+      isExpired,
     },
     stampsCount,
   });

@@ -61,6 +61,8 @@ export interface Offer {
   isActive: boolean;
   visitsRequired?: number;
   expiryDays?: number;
+  expiryDate?: string;
+  image?: string;
   createdAt: string;
 }
 

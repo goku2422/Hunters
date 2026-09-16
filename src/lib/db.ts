@@ -396,7 +396,23 @@ class DatabaseStore {
     };
   }
 
-  public updateShopOffer(shopId: string, offerData: { title?: string; description?: string; visitsRequired?: number; expiryDays?: number; image?: string; terms?: string; discountPercent?: number; isActive?: boolean }): Offer {
+  public isOfferExpired(offer?: Offer | null): boolean {
+    if (!offer) return false;
+    if (offer.isActive === false) return true;
+    if (offer.expiryDate) {
+      const expTime = new Date(offer.expiryDate.includes('T') ? offer.expiryDate : `${offer.expiryDate}T23:59:59`).getTime();
+      if (!isNaN(expTime) && expTime < Date.now()) return true;
+    }
+    if (offer.expiryDays && offer.createdAt) {
+      const createdTime = new Date(offer.createdAt).getTime();
+      if (!isNaN(createdTime) && createdTime + offer.expiryDays * 86400000 < Date.now()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public updateShopOffer(shopId: string, offerData: { title?: string; description?: string; visitsRequired?: number; expiryDays?: number; expiryDate?: string; image?: string; terms?: string; discountPercent?: number; isActive?: boolean }): Offer {
     let offer = this.data.offers.find((o) => o.id === shopId || o.id === `offer-${shopId}`);
     if (!offer) {
       offer = {
@@ -408,6 +424,7 @@ class DatabaseStore {
         isActive: offerData.isActive ?? true,
         visitsRequired: offerData.visitsRequired || 8,
         expiryDays: offerData.expiryDays || 30,
+        expiryDate: offerData.expiryDate || undefined,
         image: offerData.image || '',
         createdAt: new Date().toISOString(),
       };
@@ -417,6 +434,7 @@ class DatabaseStore {
       if (offerData.description !== undefined) offer.description = offerData.description;
       if (offerData.visitsRequired !== undefined) offer.visitsRequired = offerData.visitsRequired;
       if (offerData.expiryDays !== undefined) offer.expiryDays = offerData.expiryDays;
+      if (offerData.expiryDate !== undefined) offer.expiryDate = offerData.expiryDate;
       if (offerData.image !== undefined) offer.image = offerData.image;
       if (offerData.terms !== undefined) offer.terms = offerData.terms;
       if (offerData.discountPercent !== undefined) offer.discountPercent = offerData.discountPercent;

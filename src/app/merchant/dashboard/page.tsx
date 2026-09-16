@@ -78,6 +78,7 @@ export default function MerchantDashboardPage() {
   const [offerImage, setOfferImage] = useState('');
   const [visitsRequired, setVisitsRequired] = useState('8');
   const [rewardExpiry, setRewardExpiry] = useState('30');
+  const [expiryDate, setExpiryDate] = useState('');
   const [discountPercent, setDiscountPercent] = useState('15');
   const [offerSaved, setOfferSaved] = useState(false);
   const [offerSaving, setOfferSaving] = useState(false);
@@ -165,6 +166,7 @@ export default function MerchantDashboardPage() {
           setOfferMessage(offerData.offer.description || 'Special reward for loyal customers.');
           setVisitsRequired(String(offerData.offer.visitsRequired || 8));
           setRewardExpiry(String(offerData.offer.expiryDays || 30));
+          if (offerData.offer.expiryDate) setExpiryDate(offerData.offer.expiryDate);
           if (offerData.offer.image) setOfferImage(offerData.offer.image);
           if (offerData.offer.discountPercent) setDiscountPercent(String(offerData.offer.discountPercent));
         }
@@ -254,6 +256,7 @@ export default function MerchantDashboardPage() {
           description: offerMessage,
           visitsRequired: Number(visitsRequired) || 8,
           expiryDays: Number(rewardExpiry) || 30,
+          expiryDate: expiryDate || undefined,
           discountPercent: Number(discountPercent) || 15,
           image: offerImage,
           isActive: true,
@@ -443,6 +446,7 @@ export default function MerchantDashboardPage() {
             offerImage={offerImage}
             visitsRequired={visitsRequired}
             rewardExpiry={rewardExpiry}
+            expiryDate={expiryDate}
             offerSaved={offerSaved}
             offerSaving={offerSaving}
             onOfferTitleChange={setOfferTitle}
@@ -450,6 +454,7 @@ export default function MerchantDashboardPage() {
             onOfferImageChange={setOfferImage}
             onVisitsRequiredChange={setVisitsRequired}
             onRewardExpiryChange={setRewardExpiry}
+            onExpiryDateChange={setExpiryDate}
             onSaveOffer={handleSaveOffer}
           />
         </main>
@@ -1165,6 +1170,7 @@ function CreateOfferView({
   offerImage,
   visitsRequired,
   rewardExpiry,
+  expiryDate,
   offerSaved,
   offerSaving,
   onOfferTitleChange,
@@ -1172,6 +1178,7 @@ function CreateOfferView({
   onOfferImageChange,
   onVisitsRequiredChange,
   onRewardExpiryChange,
+  onExpiryDateChange,
   onSaveOffer,
 }: {
   shopName: string;
@@ -1180,6 +1187,7 @@ function CreateOfferView({
   offerImage: string;
   visitsRequired: string;
   rewardExpiry: string;
+  expiryDate: string;
   offerSaved: boolean;
   offerSaving: boolean;
   onOfferTitleChange: (value: string) => void;
@@ -1187,6 +1195,7 @@ function CreateOfferView({
   onOfferImageChange: (value: string) => void;
   onVisitsRequiredChange: (value: string) => void;
   onRewardExpiryChange: (value: string) => void;
+  onExpiryDateChange: (value: string) => void;
   onSaveOffer: () => void;
 }) {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1197,9 +1206,11 @@ function CreateOfferView({
     reader.readAsDataURL(file);
   };
 
+  const requiredCount = Math.min(24, Math.max(1, Number(visitsRequired) || 8));
+
   return (
     <FeatureShell title="Create Offer" subtitle="Design custom reward cards for your customers with live preview">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -1210,9 +1221,9 @@ function CreateOfferView({
           <h3 className="font-bold text-slate-900 text-base">Offer Configuration</h3>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-2">Reward Image</label>
-            <div className="flex items-center gap-4">
-              <label className="flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-slate-100 ring-2 ring-slate-200/80 hover:bg-slate-50 transition">
+            <label className="block text-xs font-bold text-slate-700 mb-2">Reward Image (File Upload or URL)</label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <label className="flex h-28 w-28 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-slate-100 ring-2 ring-slate-200/80 hover:bg-slate-50 transition">
                 {offerImage ? (
                   <img src={offerImage} alt="Reward preview" className="h-full w-full object-cover" />
                 ) : (
@@ -1222,23 +1233,41 @@ function CreateOfferView({
                 )}
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
               </label>
-              <div className="flex-1 text-xs text-slate-500 leading-relaxed">
-                Upload your brand or reward photo. Appears directly on customer stamp cards.
+              <div className="flex-1 w-full space-y-2">
+                <input
+                  type="text"
+                  value={offerImage}
+                  onChange={(e) => onOfferImageChange(e.target.value)}
+                  placeholder="Or paste image URL here..."
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs outline-none focus:border-[#1f7775]"
+                />
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Upload an image file or paste an image link. This image will appear on the customer card.
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Visits Required</label>
               <input
                 type="number"
                 min="1"
-                max="99"
+                max="50"
                 value={visitsRequired}
                 onChange={(e) => onVisitsRequiredChange(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-[#1f7775]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Expiry Date</label>
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => onExpiryDateChange(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-[#1f7775]"
               />
             </div>
             <div>
@@ -1250,18 +1279,18 @@ function CreateOfferView({
                 value={rewardExpiry}
                 onChange={(e) => onRewardExpiryChange(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none focus:border-[#1f7775]"
+                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs outline-none focus:border-[#1f7775]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Reward Description</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Reward Title / Description</label>
             <input
               value={offerTitle}
               onChange={(e) => onOfferTitleChange(e.target.value)}
               required
-              placeholder="e.g. Free Beverage or 15% Off Total Bill"
+              placeholder="e.g. Free Cupcake or 15% Off Total Bill"
               className="w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none focus:border-[#1f7775]"
             />
           </div>
@@ -1295,9 +1324,9 @@ function CreateOfferView({
 
         <div>
           <div className="sticky top-24 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Live Customer Preview</p>
-            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-              <div className="flex h-40 items-center justify-center bg-slate-200/80">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Live Customer Card Preview</p>
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
+              <div className="flex h-36 items-center justify-center bg-slate-200/80 overflow-hidden">
                 {offerImage ? (
                   <img src={offerImage} alt="Live preview" className="h-full w-full object-cover" />
                 ) : (
@@ -1309,9 +1338,35 @@ function CreateOfferView({
                   {shopName}
                 </span>
                 <h4 className="font-black text-slate-900 text-sm leading-snug">{offerTitle || 'Your Reward Description'}</h4>
-                <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-600 border-t border-slate-100 pt-3">
-                  <span>{visitsRequired || '8'} Visits Required</span>
-                  <span className="text-emerald-600">{rewardExpiry || '30'} Days Expiry</span>
+                
+                {/* Dynamic Stamp Slots Preview */}
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Stamp Slots ({requiredCount} Visits)
+                  </p>
+                  <div className="grid grid-cols-4 gap-2 justify-items-center">
+                    {Array.from({ length: requiredCount }).map((_, idx) => {
+                      const num = idx + 1;
+                      const isLast = num === requiredCount;
+                      return (
+                        <div
+                          key={num}
+                          className={`w-9 h-9 rounded-full border-2 border-dashed flex items-center justify-center text-[11px] font-bold ${
+                            isLast
+                              ? 'border-[#1f7775] bg-[#e3f1ef] text-[#1f7775]'
+                              : 'border-slate-300 bg-white text-slate-400'
+                          }`}
+                        >
+                          {isLast ? <Gift className="w-4 h-4" /> : num}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-600 border-t border-slate-100 pt-3">
+                  <span>{requiredCount} Visits Required</span>
+                  <span className="text-emerald-600">{expiryDate ? `Expires ${expiryDate}` : `${rewardExpiry || '30'} Days Expiry`}</span>
                 </div>
                 <p className="mt-2 text-xs text-slate-500 leading-relaxed">{offerMessage || 'Your reward details will appear here.'}</p>
               </div>

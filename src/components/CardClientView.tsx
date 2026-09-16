@@ -33,6 +33,12 @@ interface OfferInfo {
   discountPercent: number;
   visitsRequired: number;
   expiryDays: number;
+  expiryDate?: string;
+  description?: string;
+  terms?: string;
+  image?: string;
+  isActive?: boolean;
+  isExpired?: boolean;
 }
 
 interface CardClientViewProps {
@@ -341,24 +347,47 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
           </div>
         ) : (
           <>
+            {/* EXPIRY ALERT BANNER */}
+            {offer.isExpired && (
+              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 my-3 flex items-center gap-3 text-rose-700">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600" />
+                <div>
+                  <p className="text-xs font-bold">This Offer has Expired</p>
+                  <p className="text-[11px] text-rose-600">This reward card is no longer active and stamps cannot be claimed.</p>
+                </div>
+              </div>
+            )}
+
+            {/* SUBMIT / DUPLICATE ERROR BANNER */}
+            {submitError && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 my-3 flex items-center gap-3 text-amber-800">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600" />
+                <p className="text-xs font-semibold">{submitError}</p>
+              </div>
+            )}
+
             {/* 2. REWARDS CARD BOX */}
             <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 my-3 flex items-center justify-between gap-3">
-              <div className="w-13 h-13 bg-rose-50 rounded-2xl flex items-center justify-center text-[#80050F] flex-shrink-0">
-                <Gift className="w-6 h-6" />
+              <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-[#80050F] flex-shrink-0 overflow-hidden">
+                {offer.image ? (
+                  <img src={offer.image} alt={offer.title} className="w-full h-full object-cover" />
+                ) : (
+                  <Gift className="w-6 h-6" />
+                )}
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 mb-0.5">
                   YOUR NEXT TREAT
                 </div>
-                <h3 className="text-xs font-bold text-slate-900 leading-snug">
-                  {offer.title || "Free cupcake of your choice"}
+                <h3 className="text-xs font-bold text-slate-900 leading-snug truncate">
+                  {offer.title || "Free reward of your choice"}
                 </h3>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                   Collect {visitsLeft} more stamps
                 </p>
               </div>
               <div className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 whitespace-nowrap pt-1">
-                {offer.expiryDays} DAY Expiry
+                {offer.expiryDate ? `EXP: ${offer.expiryDate}` : `${offer.expiryDays} DAY Expiry`}
               </div>
             </div>
 
@@ -366,9 +395,9 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 my-3">
               <div className="flex items-center justify-between mb-4">
                 <div className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase">
-                  STAMP CARD
+                  STAMP CARD ({offer.visitsRequired || 8} STAMPS)
                 </div>
-                {isLoggedIn && stampsCount < (offer.visitsRequired || 8) && (
+                {isLoggedIn && !offer.isExpired && stampsCount < (offer.visitsRequired || 8) && (
                   <button
                     type="button"
                     onClick={async () => {
@@ -399,13 +428,15 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
                     className="text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full flex items-center gap-1 transition-all"
                   >
                     <Sparkles className="w-3 h-3 text-amber-600" />
-                    <span>⚡ Quick Test (8 Stamps)</span>
+                    <span>⚡ Quick Test ({offer.visitsRequired || 8} Stamps)</span>
                   </button>
                 )}
               </div>
 
-              {/* 8 Circular Stamp Slots (0 to 8 stamps matching customer dashboard) */}
-              <div className="grid grid-cols-4 gap-3 mb-5 max-w-[280px] mx-auto justify-items-center">
+              {/* Circular Stamp Slots Grid - dynamically based on offer.visitsRequired */}
+              <div className={`grid gap-3 mb-5 max-w-[320px] mx-auto justify-items-center ${
+                (offer.visitsRequired || 8) <= 5 ? 'grid-cols-5' : 'grid-cols-4'
+              }`}>
                 {Array.from({ length: offer.visitsRequired || 8 }).map((_, index) => {
                   const stampNum = index + 1;
                   const isEarned = stampNum <= stampsCount;
@@ -442,15 +473,18 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
               <p className="text-center text-xs text-slate-500 font-medium pt-1 mb-4">
                 {stampsCount >= (offer.visitsRequired || 8) ? (
                   <strong className="text-amber-600 font-black text-sm block">🎉 CONGRATULATIONS! YOU UNLOCKED YOUR FREE TREAT!</strong>
+                ) : offer.isExpired ? (
+                  <strong className="text-rose-600 font-bold block">This offer has expired.</strong>
                 ) : (
                   <>You're <strong className="text-[#80050F]">{visitsLeft} stamps</strong> away from your treat!</>
                 )}
               </p>
 
-              {/* Claim Reward Pill Button matching reference image */}
+              {/* Claim Reward Pill Button */}
               <button
                 type="button"
                 onClick={() => {
+                  if (offer.isExpired) return;
                   const savedName = (typeof window !== "undefined" ? localStorage.getItem("customer_name") : "") || name;
                   const savedMob = (typeof window !== "undefined" ? localStorage.getItem("customer_mobile") : "") || mobile;
                   if (!savedMob || savedMob.trim().length !== 10 || !isLoggedIn) {
@@ -461,15 +495,23 @@ export default function CardClientView({ shopSlug: initialSlug }: CardClientView
                     createClaimForShop(savedName || "Customer", savedMob, shop.id);
                   }
                 }}
-                disabled={isSubmitting}
+                disabled={isSubmitting || Boolean(offer.isExpired)}
                 className={`w-full py-3.5 text-white font-extrabold text-sm rounded-full shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 ${
-                  stampsCount >= (offer.visitsRequired || 8)
+                  offer.isExpired
+                    ? 'bg-slate-400 cursor-not-allowed shadow-none'
+                    : stampsCount >= (offer.visitsRequired || 8)
                     ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/30'
                     : 'bg-[#80050F] hover:bg-[#68040C]'
                 }`}
               >
                 <Gift className="w-4 h-4" />
-                <span>{stampsCount >= (offer.visitsRequired || 8) ? "Redeem 8th Stamp Free Treat" : "Claim Reward"}</span>
+                <span>
+                  {offer.isExpired
+                    ? "Offer Expired"
+                    : stampsCount >= (offer.visitsRequired || 8)
+                    ? `Redeem ${offer.visitsRequired || 8}th Stamp Reward`
+                    : "Claim Reward"}
+                </span>
               </button>
             </div>
 
