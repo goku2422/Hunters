@@ -91,25 +91,37 @@ class DatabaseStore {
 
   // --- ADMIN ---
   public async getAdminByEmail(email: string): Promise<AdminUser | undefined> {
-    await this.ensureInit();
-    const db = await getDb();
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail) return undefined;
 
-    const safeEscaped = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    let admin = await db.collection<AdminUser>('admins').findOne({ email: new RegExp('^' + safeEscaped + '$', 'i') });
+    try {
+      await this.ensureInit();
+      const db = await getDb();
+      const safeEscaped = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      let admin = await db.collection<AdminUser>('admins').findOne({ email: new RegExp('^' + safeEscaped + '$', 'i') });
 
-    if (!admin) {
-      const initAdmin = INITIAL_ADMINS.find((a) => a.email.toLowerCase() === cleanEmail);
-      if (initAdmin) {
-        await db.collection('admins').updateOne({ email: initAdmin.email }, { $set: initAdmin }, { upsert: true }).catch(() => {});
-        admin = initAdmin as any;
+      if (!admin) {
+        const initAdmin = INITIAL_ADMINS.find((a) => a.email.toLowerCase() === cleanEmail);
+        if (initAdmin) {
+          await db.collection('admins').updateOne({ email: initAdmin.email }, { $set: initAdmin }, { upsert: true }).catch(() => {});
+          admin = initAdmin as any;
+        }
       }
+
+      if (admin) {
+        const { _id, ...clean }: any = admin;
+        return clean;
+      }
+    } catch (err) {
+      console.error('MongoDB query error in getAdminByEmail:', err);
     }
 
-    if (!admin) return undefined;
-    const { _id, ...clean }: any = admin;
-    return clean;
+    const fallbackAdmin = INITIAL_ADMINS.find((a) => a.email.toLowerCase() === cleanEmail);
+    if (fallbackAdmin) {
+      return fallbackAdmin;
+    }
+
+    return undefined;
   }
 
   // --- SHOPS ---
@@ -235,22 +247,37 @@ class DatabaseStore {
   }
 
   public async getMerchantByEmail(email: string): Promise<Merchant | undefined> {
-    await this.ensureInit();
-    const db = await getDb();
-    const cleanEmail = email.trim().toLowerCase();
-    let m = await db.collection<Merchant>('merchants').findOne({ email: new RegExp('^' + cleanEmail + '$', 'i') });
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) return undefined;
 
-    if (!m) {
-      const initMerchant = INITIAL_MERCHANTS.find((im) => im.email.toLowerCase() === cleanEmail);
-      if (initMerchant) {
-        await db.collection('merchants').updateOne({ id: initMerchant.id }, { $set: initMerchant }, { upsert: true }).catch(() => {});
-        m = initMerchant as any;
+    try {
+      await this.ensureInit();
+      const db = await getDb();
+      const safeEscaped = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      let m = await db.collection<Merchant>('merchants').findOne({ email: new RegExp('^' + safeEscaped + '$', 'i') });
+
+      if (!m) {
+        const initMerchant = INITIAL_MERCHANTS.find((im) => im.email.toLowerCase() === cleanEmail);
+        if (initMerchant) {
+          await db.collection('merchants').updateOne({ id: initMerchant.id }, { $set: initMerchant }, { upsert: true }).catch(() => {});
+          m = initMerchant as any;
+        }
       }
+
+      if (m) {
+        const { _id, ...merchant }: any = m;
+        return merchant;
+      }
+    } catch (err) {
+      console.error('MongoDB query error in getMerchantByEmail:', err);
     }
 
-    if (!m) return undefined;
-    const { _id, ...merchant }: any = m;
-    return merchant;
+    const fallbackMerchant = INITIAL_MERCHANTS.find((im) => im.email.toLowerCase() === cleanEmail);
+    if (fallbackMerchant) {
+      return fallbackMerchant;
+    }
+
+    return undefined;
   }
 
   public async getMerchantByGoogleId(googleId: string): Promise<Merchant | undefined> {
