@@ -30,8 +30,12 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const password = body.password || body.passwordHash;
-  if (!body.shopId || !body.email || !body.name || !password) {
+  const password = (body.password || body.passwordHash || '').trim();
+  const cleanEmail = (body.email || '').trim().toLowerCase();
+  const cleanName = (body.name || '').trim();
+  const cleanShopId = (body.shopId || '').trim();
+
+  if (!cleanShopId || !cleanEmail || !cleanName || !password) {
     return NextResponse.json(
       { success: false, message: 'Shop ID, email, name, and password are required.' },
       { status: 400 }
@@ -39,14 +43,14 @@ export async function POST(req: NextRequest) {
   }
 
   const merchant = await db.saveMerchant({
-    id: body.id,
-    shopId: body.shopId,
-    email: body.email.trim(),
-    name: body.name.trim(),
+    id: body.id ? body.id.trim() : undefined,
+    shopId: cleanShopId,
+    email: cleanEmail,
+    name: cleanName,
     passwordHash: password,
-    phone: body.phone,
+    phone: body.phone ? String(body.phone).trim() : '',
     isActive: body.isActive ?? true,
-    googleEmail: body.gmailEmail || body.googleEmail || undefined,
+    googleEmail: body.gmailEmail || body.googleEmail ? String(body.gmailEmail || body.googleEmail).trim().toLowerCase() : undefined,
     loginType: body.gmailEmail || body.googleEmail ? 'both' : 'password',
   });
 

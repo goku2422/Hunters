@@ -338,8 +338,11 @@ class DatabaseStore {
     const db = await getDb();
     const now = new Date().toISOString();
 
-    const targetId = merchantData.id || `merchant-${Date.now().toString(36)}`;
+    const targetId = merchantData.id ? merchantData.id.trim() : `merchant-${Date.now().toString(36)}`;
     const existing = await db.collection<Merchant>('merchants').findOne({ id: targetId });
+
+    const cleanEmail = merchantData.email ? merchantData.email.trim().toLowerCase() : '';
+    const cleanPassword = merchantData.passwordHash ? merchantData.passwordHash.trim() : '';
 
     let merchant: Merchant;
     if (existing) {
@@ -348,19 +351,22 @@ class DatabaseStore {
         ...prev,
         ...merchantData,
         id: targetId,
+        email: cleanEmail || prev.email,
+        passwordHash: cleanPassword || prev.passwordHash,
+        name: merchantData.name ? merchantData.name.trim() : prev.name,
       };
     } else {
       merchant = {
         id: targetId,
-        shopId: merchantData.shopId,
-        email: merchantData.email.trim(),
-        passwordHash: merchantData.passwordHash,
+        shopId: merchantData.shopId.trim(),
+        email: cleanEmail,
+        passwordHash: cleanPassword,
         name: merchantData.name.trim(),
-        phone: merchantData.phone || '',
+        phone: merchantData.phone ? String(merchantData.phone).trim() : '',
         isActive: merchantData.isActive ?? true,
         createdAt: now,
-        googleEmail: merchantData.googleEmail,
-        loginType: merchantData.loginType,
+        googleEmail: merchantData.googleEmail ? String(merchantData.googleEmail).trim().toLowerCase() : undefined,
+        loginType: merchantData.loginType || (merchantData.googleEmail ? 'both' : 'password'),
       };
     }
 
