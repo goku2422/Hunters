@@ -455,14 +455,28 @@ export default function AdminDashboardPage() {
         shop: targetShop,
       };
 
+      const res = await fetch('/api/admin/merchants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMerchant),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(`Failed to save merchant: ${data.message || 'Server error'}`);
+        return;
+      }
+
+      const savedMerchant = data.merchant || newMerchant;
+
       setMerchants((prev) => {
-        const updated = [newMerchant, ...prev];
+        const updated = [savedMerchant, ...prev.filter((m) => m.id !== savedMerchant.id)];
         saveLocalMerchants(updated);
         return updated;
       });
 
       setShops((prevShops) => {
-        const updated = prevShops.map((s) => (s.id === targetShopId ? { ...s, merchant: newMerchant } : s));
+        const updated = prevShops.map((s) => (s.id === targetShopId ? { ...s, merchant: savedMerchant } : s));
         saveLocalShops(updated);
         return updated;
       });
@@ -477,13 +491,7 @@ export default function AdminDashboardPage() {
         gmailEmail: '',
       });
 
-      fetch('/api/admin/merchants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newMerchant),
-      }).catch(() => {});
-
-      alert(`Merchant "${newMerchant.name}" created successfully!`);
+      alert(`Merchant "${savedMerchant.name}" created successfully in MongoDB!`);
     } catch (err) {
       console.error('Error saving merchant:', err);
       alert('Error saving merchant account.');

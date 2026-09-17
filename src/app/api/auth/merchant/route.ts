@@ -16,7 +16,15 @@ export async function POST(req: NextRequest) {
     }
 
     const merchant = await db.getMerchantByEmail(cleanEmail);
-    if (!merchant || merchant.passwordHash !== cleanPassword) {
+    const merchantFound = Boolean(merchant);
+    const passwordHashExists = Boolean(merchant?.passwordHash);
+    const isPasswordValid = merchant ? merchant.passwordHash.trim() === cleanPassword : false;
+
+    console.log(
+      `[Merchant Auth Debug] email: "${cleanEmail}", merchantFound: ${merchantFound}, merchantId: "${merchant?.id || 'NONE'}", passwordHashExists: ${passwordHashExists}, passwordVerificationResult: ${isPasswordValid}`
+    );
+
+    if (!merchant || !isPasswordValid) {
       return NextResponse.json(
         { success: false, message: 'Invalid merchant email or password.' },
         { status: 401 }
