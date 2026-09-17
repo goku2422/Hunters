@@ -2,6 +2,13 @@ import { Shop, Merchant, AdminUser, Offer, Claim } from '../types';
 
 export const INITIAL_ADMINS: AdminUser[] = [
   {
+    id: 'admin-suraj',
+    email: 'surajadmin@gmail.com',
+    passwordHash: 'surajadmin@#',
+    name: 'Suraj Admin',
+    createdAt: new Date().toISOString(),
+  },
+  {
     id: 'admin-1',
     email: 'admin@scratchease.com',
     passwordHash: 'admin123',

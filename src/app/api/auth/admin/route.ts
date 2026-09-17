@@ -7,17 +7,19 @@ export const revalidate = 0;
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const cleanEmail = body.email ? String(body.email).trim().toLowerCase() : '';
+    const cleanPassword = body.password ? String(body.password).trim() : '';
 
-    if (!email || !password) {
+    if (!cleanEmail || !cleanPassword) {
       return NextResponse.json(
         { success: false, message: 'Email and password are required.' },
         { status: 400 }
       );
     }
 
-    const admin = await db.getAdminByEmail(email);
-    if (!admin || admin.passwordHash !== password) {
+    const admin = await db.getAdminByEmail(cleanEmail);
+    if (!admin || admin.passwordHash !== cleanPassword) {
       return NextResponse.json(
         { success: false, message: 'Invalid admin email or password.' },
         { status: 401 }
