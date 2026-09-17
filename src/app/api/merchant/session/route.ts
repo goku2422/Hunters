@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const { isCounterActive } = await req.json();
-  db.setCounterMode(session.id, Boolean(isCounterActive));
+  await db.setCounterMode(session.id, Boolean(isCounterActive));
 
   return NextResponse.json({
     success: true,
@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
 
   // If merchant is updating shop GPS location
   if (body.latitude !== undefined && body.longitude !== undefined && session.shopId) {
-    const shop = db.getShopById(session.shopId);
+    const shop = await db.getShopById(session.shopId);
     if (shop) {
-      db.saveShop({
+      await db.saveShop({
         ...shop,
         latitude: body.latitude,
         longitude: body.longitude,
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   // Heartbeat session
   if (session.shopId) {
-    db.registerOrUpdateSession(session.id, session.shopId, body.isCounterActive ?? true);
+    await db.registerOrUpdateSession(session.id, session.shopId, body.isCounterActive ?? true);
   }
 
   return NextResponse.json({ success: true, message: 'Heartbeat registered' });

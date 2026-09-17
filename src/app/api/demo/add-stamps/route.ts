@@ -10,20 +10,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Mobile and shopId required' }, { status: 400 });
     }
 
-    const currentCount = db.getCustomerStampCount(cleanMobile, shopId);
+    const currentCount = await db.getCustomerStampCount(cleanMobile, shopId);
     const needed = Math.max(0, Number(targetStamps) - currentCount);
 
     for (let i = 0; i < needed; i++) {
-      const claim = db.createClaim({
+      const claim = await db.createClaim({
         customerName: name || 'Demo User',
         customerMobile: cleanMobile,
         shopId,
         identificationMethod: 'SIMULATOR',
       });
-      db.updateClaimStatus(claim.id, 'ACCEPTED', 'Demo Fast-Forward');
+      await db.updateClaimStatus(claim.id, 'ACCEPTED', 'Demo Fast-Forward');
     }
 
-    const newCount = db.getCustomerStampCount(cleanMobile, shopId);
+    const newCount = await db.getCustomerStampCount(cleanMobile, shopId);
     return NextResponse.json({ success: true, stampsCount: newCount });
   } catch (err) {
     console.error('Error fast forwarding stamps:', err);

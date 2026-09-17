@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const shop = db.getShopById(cleanSlug);
+  const shop = await db.getShopById(cleanSlug);
 
   if (!shop) {
     return NextResponse.json(
@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const offer = db.getShopOffer(shop.id);
-  const stampsCount = mobile ? db.getCustomerStampCount(mobile, shop.id) : 0;
+  const offer = await db.getShopOffer(shop.id);
+  const stampsCount = mobile ? await db.getCustomerStampCount(mobile, shop.id) : 0;
   const isExpired = db.isOfferExpired(offer);
 
   return NextResponse.json({

@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const admin = db.getAdminByEmail(email);
+    const admin = await db.getAdminByEmail(email);
     if (!admin || admin.passwordHash !== password) {
       return NextResponse.json(
         { success: false, message: 'Invalid admin email or password.' },

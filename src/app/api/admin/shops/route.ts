@@ -15,10 +15,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const shops = db.getShops().map((shop) => {
-    const claims = db.getClaims(shop.id);
-    const merchant = db.getMerchantByShopId(shop.id);
-    const sessions = db.getMerchantSessions(shop.id);
+  const allShops = await db.getShops();
+  const allClaims = await db.getClaims();
+  const allMerchants = await db.getMerchants();
+  const allSessions = await db.getMerchantSessions();
+
+  const shops = allShops.map((shop) => {
+    const claims = allClaims.filter((c) => c.shopId === shop.id);
+    const merchant = allMerchants.find((m) => m.shopId === shop.id);
+    const sessions = allSessions.filter((s) => s.shopId === shop.id);
     const isOnline = sessions.some((s) => s.isCounterActive);
 
     return {
@@ -52,7 +57,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const shop = db.saveShop({
+  const shop = await db.saveShop({
     id: body.id,
     name: body.name,
     category: body.category || 'Retail Store',
@@ -66,10 +71,10 @@ export async function POST(req: NextRequest) {
     slug: body.slug,
   });
 
-  let merchant = db.getMerchantByShopId(shop.id);
+  let merchant = await db.getMerchantByShopId(shop.id);
   if (!merchant) {
     const slug = shop.slug || shop.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    merchant = db.saveMerchant({
+    merchant = await db.saveMerchant({
       id: `merchant-${shop.id}`,
       shopId: shop.id,
       email: `manager@${slug}.com`,
@@ -107,17 +112,17 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Shop ID is required.' }, { status: 400 });
   }
 
-  const shop = db.saveShop({
+  const shop = await db.saveShop({
     ...body,
     latitude: parseFloat(body.latitude),
     longitude: parseFloat(body.longitude),
     radiusMeters: parseInt(body.radiusMeters) || 75,
   });
 
-  let merchant = db.getMerchantByShopId(shop.id);
+  let merchant = await db.getMerchantByShopId(shop.id);
   if (!merchant) {
     const slug = shop.slug || shop.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    merchant = db.saveMerchant({
+    merchant = await db.saveMerchant({
       id: `merchant-${shop.id}`,
       shopId: shop.id,
       email: `manager@${slug}.com`,
@@ -152,6 +157,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Shop ID required' }, { status: 400 });
   }
 
-  const deleted = db.deleteShop(id);
+  const deleted = await db.deleteShop(id);
   return NextResponse.json({ success: deleted });
 }

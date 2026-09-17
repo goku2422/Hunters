@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const merchant = db.getMerchantByEmail(cleanEmail);
+    const merchant = await db.getMerchantByEmail(cleanEmail);
     if (!merchant || merchant.passwordHash !== cleanPassword) {
       return NextResponse.json(
         { success: false, message: 'Invalid merchant email or password.' },
@@ -30,9 +30,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let shop = db.getShopById(merchant.shopId);
+    let shop = await db.getShopById(merchant.shopId);
     if (!shop) {
-      shop = db.getShops().find((s) => s.isActive) || db.getShops()[0];
+      const allShops = await db.getShops();
+      shop = allShops.find((s) => s.isActive) || allShops[0];
     }
     if (!shop) {
       return NextResponse.json(
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Register merchant counter session
-    const session = db.registerOrUpdateSession(merchant.id, shop.id, true);
+    const session = await db.registerOrUpdateSession(merchant.id, shop.id, true);
 
     const token = createToken({
       type: 'merchant',
@@ -96,8 +97,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const merchant = db.getMerchantById(session.id);
-  const shop = session.shopId ? db.getShopById(session.shopId) : undefined;
+  const merchant = await db.getMerchantById(session.id);
+  const shop = session.shopId ? await db.getShopById(session.shopId) : undefined;
 
   return NextResponse.json({
     success: true,
@@ -118,16 +119,16 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const merchant = db.getMerchantById(session.id);
-  const shop = session.shopId ? db.getShopById(session.shopId) : undefined;
+  const merchant = await db.getMerchantById(session.id);
+  const shop = session.shopId ? await db.getShopById(session.shopId) : undefined;
 
   let updatedShop = shop;
   if (shop && body.shop) {
-    updatedShop = db.saveShop({
+    updatedShop = await db.saveShop({
       ...shop,
       name: body.shop.name ?? shop.name,
       address: body.shop.address ?? shop.address,
-      phone: body.shop.phone ?? shop.phone,
+      phone: body.phone,
       category: body.shop.category ?? shop.category,
       latitude: body.shop.latitude !== undefined ? Number(body.shop.latitude) : shop.latitude,
       longitude: body.shop.longitude !== undefined ? Number(body.shop.longitude) : shop.longitude,
@@ -136,7 +137,7 @@ export async function PUT(req: NextRequest) {
 
   let updatedMerchant = merchant;
   if (merchant && body.merchant) {
-    updatedMerchant = db.saveMerchant({
+    updatedMerchant = await db.saveMerchant({
       ...merchant,
       name: body.merchant.name ?? merchant.name,
       phone: body.merchant.phone ?? merchant.phone,

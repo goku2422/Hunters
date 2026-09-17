@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const merchants = db.getMerchants();
+  const merchants = await db.getMerchants();
   return NextResponse.json({ success: true, merchants });
 }
 
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const merchant = db.saveMerchant({
+  const merchant = await db.saveMerchant({
     id: body.id,
     shopId: body.shopId,
     email: body.email.trim(),
@@ -69,6 +69,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Merchant ID required' }, { status: 400 });
   }
 
-  const deleted = db.deleteMerchant(id);
+  const deleted = await db.deleteMerchant(id);
   return NextResponse.json({ success: deleted });
 }

@@ -15,9 +15,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const stats = db.getStats();
-  const customers = db.getCustomers();
-  const recentClaims = db.getClaims().slice(0, 10);
+  const stats = await db.getStats();
+  const customers = await db.getCustomers();
+  const allClaims = await db.getClaims();
+  const recentClaims = allClaims.slice(0, 10);
 
   return NextResponse.json({
     success: true,

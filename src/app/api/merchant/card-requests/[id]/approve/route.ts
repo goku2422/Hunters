@@ -18,7 +18,7 @@ export async function POST(
     }
 
     const requestId = params.id;
-    const claim = db.getClaimById(requestId);
+    const claim = await db.getClaimById(requestId);
 
     if (!claim) {
       return NextResponse.json({ success: false, message: 'Card collection request not found.' }, { status: 404 });
@@ -45,8 +45,8 @@ export async function POST(
     }
 
     // Update status to ACCEPTED/APPROVED
-    const updatedClaim = db.updateClaimStatus(requestId, 'ACCEPTED', session.name || 'Merchant Cashier');
-    const stampCount = db.getCustomerStampCount(claim.customerMobile, claim.shopId);
+    const updatedClaim = await db.updateClaimStatus(requestId, 'ACCEPTED', session.name || 'Merchant Cashier');
+    const stampCount = await db.getCustomerStampCount(claim.customerMobile, claim.shopId);
 
     return NextResponse.json({
       success: true,

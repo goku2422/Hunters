@@ -1,4 +1,4 @@
-﻿import NextAuth from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { db } from "@/lib/db";
 import { createToken } from "@/lib/auth";
@@ -18,11 +18,11 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        const merchant = db.getMerchantByGoogleEmail(user.email ?? "");
+        const merchant = await db.getMerchantByGoogleEmail(user.email ?? "");
         if (!merchant) return "/merchant/login?error=NotRegistered";
         if (!merchant.isActive) return "/merchant/login?error=Deactivated";
         if (!merchant.googleId && user.id) {
-          db.saveMerchant({ ...merchant, googleId: user.id, passwordHash: merchant.passwordHash });
+          await db.saveMerchant({ ...merchant, googleId: user.id, passwordHash: merchant.passwordHash });
         }
         return true;
       }
@@ -30,10 +30,10 @@ const handler = NextAuth({
     },
     async jwt({ token, user, account }) {
       if (account?.provider === "google" && user?.email) {
-        const merchant = db.getMerchantByGoogleEmail(user.email);
+        const merchant = await db.getMerchantByGoogleEmail(user.email);
         if (merchant) {
-          const shop = db.getShopById(merchant.shopId);
-          db.registerOrUpdateSession(merchant.id, merchant.shopId, true, "Google OAuth Login");
+          const shop = await db.getShopById(merchant.shopId);
+          await db.registerOrUpdateSession(merchant.id, merchant.shopId, true, "Google OAuth Login");
           const customToken = createToken({
             type: "merchant",
             id: merchant.id,

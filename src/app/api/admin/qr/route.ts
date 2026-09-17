@@ -42,13 +42,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: "shopId required" }, { status: 400 });
   }
 
-  const shop = db.getShopById(shopId);
+  const shop = await db.getShopById(shopId);
   if (!shop) {
     return NextResponse.json({ success: false, message: "Shop not found" }, { status: 404 });
   }
 
   const baseUrl = resolveBaseUrl(req);
-  const qrUrl = `${baseUrl}/shop/${shop.slug}`;
+  const qrUrl = `${baseUrl}/scan/${shop.id}`;
 
   try {
     // Generate QR code as base64 PNG
@@ -89,6 +89,6 @@ export async function POST(req: NextRequest) {
   }
 
   const baseUrl = resolveBaseUrl(req);
-  const analytics = db.getShopAnalytics(baseUrl);
+  const analytics = await db.getShopAnalytics(baseUrl);
   return NextResponse.json({ success: true, analytics });
 }

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   }
 
   const shopId = session.shopId || 'shop-pizza';
-  const offer = db.getShopOffer(shopId);
+  const offer = await db.getShopOffer(shopId);
 
   return NextResponse.json({
     success: true,
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const visitsReqNum = Number(body.visitsRequired);
   const visitsRequired = !isNaN(visitsReqNum) && visitsReqNum > 0 ? visitsReqNum : 8;
 
-  const updatedOffer = db.updateShopOffer(shopId, {
+  const updatedOffer = await db.updateShopOffer(shopId, {
     title: body.title,
     description: body.description,
     visitsRequired,
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
     terms: body.terms,
     discountPercent: body.discountPercent ? Number(body.discountPercent) : undefined,
     isActive: body.isActive,
+    merchantId: session.id,
   });
 
   return NextResponse.json({

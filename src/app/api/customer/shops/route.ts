@@ -4,7 +4,8 @@ import { db } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-    const shops = db.getShops()
+    const allShops = await db.getShops();
+    const shops = allShops
         .filter((shop) => shop.isActive)
         .map(({ id, name, category, address, phone, isActive }) => ({
             id,

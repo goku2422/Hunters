@@ -1,6 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-import seedDatabaseJson from '../../data/database.json';
+import { getDb } from './mongodb';
 import {
   Shop,
   Merchant,
@@ -25,215 +23,142 @@ import {
 } from './seed';
 import { calculateHaversineDistance } from './geofence';
 
-interface DatabaseData {
-  admins: AdminUser[];
-  shops: Shop[];
-  merchants: Merchant[];
-  merchantSessions: MerchantSession[];
-  customers: Customer[];
-  offers: Offer[];
-  claims: Claim[];
-  qrScans: QrScan[];
-}
-
-
-// In serverless environments (Netlify / Vercel), process.cwd() is read-only. Use /tmp for writable storage.
-const isServerless = Boolean(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_EXECUTION_ENV);
-const PRIMARY_DATA_DIR = isServerless ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
-const PRIMARY_DB_FILE = path.join(PRIMARY_DATA_DIR, 'database.json');
-const ROOT_SEED_FILE = path.join(process.cwd(), 'data', 'database.json');
-
 class DatabaseStore {
-  private data: DatabaseData;
-  private isLoaded = false;
+  private initPromise: Promise<void> | null = null;
 
-  constructor() {
-    this.data = {
-      admins: INITIAL_ADMINS,
-      shops: INITIAL_SHOPS,
-      merchants: INITIAL_MERCHANTS,
-      merchantSessions: [
-        {
-          id: 'session-brew-1',
-          merchantId: 'merchant-brew',
-          shopId: 'shop-brew',
-          token: 'token-brew-sample',
-          deviceInfo: 'Counter iPad Pro (Terminal 1)',
-          ipAddress: '192.168.1.1',
-          isCounterActive: true,
-          lastHeartbeat: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'session-urban-1',
-          merchantId: 'merchant-urban',
-          shopId: 'shop-urban',
-          token: 'token-urban-sample',
-          deviceInfo: 'Cashier Desktop POS',
-          ipAddress: '192.168.2.1',
-          isCounterActive: true,
-          lastHeartbeat: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'session-pizza-1',
-          merchantId: 'merchant-pizza',
-          shopId: 'shop-pizza',
-          token: 'token-pizza-sample',
-          deviceInfo: 'Billing Android Tablet',
-          ipAddress: '192.168.3.1',
-          isCounterActive: true,
-          lastHeartbeat: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        },
-      ],
-      customers: [
-        {
-          id: 'cust-1',
-          name: 'Rahul Sharma',
-          mobile: '9876543210',
-          createdAt: new Date(Date.now() - 45 * 60000).toISOString(),
-        },
-        {
-          id: 'cust-2',
-          name: 'Pooja Verma',
-          mobile: '9811223344',
-          createdAt: new Date(Date.now() - 120 * 60000).toISOString(),
-        },
-      ],
-      offers: INITIAL_OFFERS,
-      claims: INITIAL_CLAIMS,
-      qrScans: [],
-    };
-    this.loadFromDisk();
-  }
-
-  private loadFromDisk() {
-    try {
-      let rootData: Partial<DatabaseData> | null = null;
-      let primaryData: Partial<DatabaseData> | null = null;
-
-      if (fs.existsSync(ROOT_SEED_FILE)) {
+  public async ensureInit() {
+    if (!this.initPromise) {
+      this.initPromise = (async () => {
         try {
-          const raw = fs.readFileSync(ROOT_SEED_FILE, 'utf-8');
-          rootData = JSON.parse(raw) as Partial<DatabaseData>;
-        } catch (err) {}
-      }
-      if (!rootData || !rootData.shops?.length) {
-        // Fallback to bundled seed JSON (always available at build time)
-        rootData = seedDatabaseJson as unknown as Partial<DatabaseData>;
-      }
+          const db = await getDb();
 
-      if (fs.existsSync(PRIMARY_DB_FILE)) {
-        try {
-          const raw = fs.readFileSync(PRIMARY_DB_FILE, 'utf-8');
-          primaryData = JSON.parse(raw) as Partial<DatabaseData>;
-        } catch (err) {}
-      }
+          // Create essential indexes
+          await db.collection('admins').createIndex({ email: 1 }, { unique: true }).catch(() => {});
+          await db.collection('shops').createIndex({ id: 1 }, { unique: true }).catch(() => {});
+          await db.collection('shops').createIndex({ slug: 1 }, { unique: true }).catch(() => {});
+          await db.collection('merchants').createIndex({ id: 1 }, { unique: true }).catch(() => {});
+          await db.collection('merchants').createIndex({ email: 1 }, { unique: true }).catch(() => {});
+          await db.collection('customers').createIndex({ mobile: 1 }, { unique: true }).catch(() => {});
+          await db.collection('rewards').createIndex({ id: 1 }, { unique: true }).catch(() => {});
+          await db.collection('claims').createIndex({ id: 1 }, { unique: true }).catch(() => {});
+          await db.collection('stampCards').createIndex({ customerMobile: 1, shopId: 1 }, { unique: true }).catch(() => {});
 
-      const mergeItems = <T extends { id: string }>(rootItems?: T[], primaryItems?: T[]): T[] => {
-        const map = new Map<string, T>();
-        (rootItems || []).forEach((item) => {
-          if (item?.id) map.set(item.id, item);
-        });
-        (primaryItems || []).forEach((item) => {
-          if (item?.id) map.set(item.id, item);
-        });
-        return Array.from(map.values());
-      };
-
-      this.data = {
-        admins: mergeItems(rootData?.admins as AdminUser[], primaryData?.admins as AdminUser[]),
-        shops: mergeItems(rootData?.shops as Shop[], primaryData?.shops as Shop[]),
-        merchants: mergeItems(rootData?.merchants as Merchant[], primaryData?.merchants as Merchant[]),
-        merchantSessions: mergeItems(rootData?.merchantSessions as MerchantSession[], primaryData?.merchantSessions as MerchantSession[]),
-        customers: mergeItems(rootData?.customers as Customer[], primaryData?.customers as Customer[]),
-        offers: mergeItems(rootData?.offers as Offer[], primaryData?.offers as Offer[]),
-        claims: mergeItems(rootData?.claims as Claim[], primaryData?.claims as Claim[]),
-        qrScans: mergeItems(rootData?.qrScans as QrScan[], primaryData?.qrScans as QrScan[]),
-      };
-
-      if (!this.data.admins.length) this.data.admins = INITIAL_ADMINS;
-      if (!this.data.shops.length) this.data.shops = INITIAL_SHOPS;
-      if (!this.data.merchants.length) this.data.merchants = INITIAL_MERCHANTS;
-      if (!this.data.offers.length) this.data.offers = INITIAL_OFFERS;
-
-      this.isLoaded = true;
-    } catch (err) {
-      console.error('Error loading database:', err);
+          // Seed if database collections are empty
+          const shopsCount = await db.collection('shops').countDocuments();
+          if (shopsCount === 0) {
+            console.log('Seeding initial MongoDB Atlas collections...');
+            if (INITIAL_ADMINS.length > 0) {
+              await db.collection('admins').insertMany(INITIAL_ADMINS).catch(() => {});
+            }
+            if (INITIAL_SHOPS.length > 0) {
+              await db.collection('shops').insertMany(INITIAL_SHOPS).catch(() => {});
+            }
+            if (INITIAL_MERCHANTS.length > 0) {
+              await db.collection('merchants').insertMany(INITIAL_MERCHANTS).catch(() => {});
+            }
+            if (INITIAL_OFFERS.length > 0) {
+              await db.collection('rewards').insertMany(INITIAL_OFFERS).catch(() => {});
+            }
+            if (INITIAL_CLAIMS.length > 0) {
+              const claimsWithDateStr = INITIAL_CLAIMS.map((c) => ({
+                ...c,
+                dateStr: c.createdAt ? c.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+              }));
+              await db.collection('claims').insertMany(claimsWithDateStr).catch(() => {});
+            }
+          }
+        } catch (err) {
+          console.error('Error initializing MongoDB Atlas connection:', err);
+        }
+      })();
     }
-  }
-
-  private saveToDisk() {
-    try {
-      if (!fs.existsSync(PRIMARY_DATA_DIR)) {
-        fs.mkdirSync(PRIMARY_DATA_DIR, { recursive: true });
-      }
-      fs.writeFileSync(PRIMARY_DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
-
-      if (!isServerless && fs.existsSync(path.dirname(ROOT_SEED_FILE))) {
-        try {
-          fs.writeFileSync(ROOT_SEED_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
-        } catch (e) {}
-      }
-    } catch (err) {
-      console.error('Error saving database (safe fallback):', err);
-    }
+    return this.initPromise;
   }
 
   // --- ADMIN ---
-  public getAdminByEmail(email: string): AdminUser | undefined {
-    return this.data.admins.find((a) => a.email.toLowerCase() === email.toLowerCase());
+  public async getAdminByEmail(email: string): Promise<AdminUser | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+    const cleanEmail = email.trim().toLowerCase();
+    const admin = await db.collection<AdminUser>('admins').findOne({ email: new RegExp('^' + cleanEmail + '$', 'i') });
+    if (!admin) return undefined;
+    const { _id, ...clean }: any = admin;
+    return clean;
   }
 
   // --- SHOPS ---
-  public getShops(): Shop[] {
-    return this.data.shops;
+  public async getShops(): Promise<Shop[]> {
+    await this.ensureInit();
+    const db = await getDb();
+    const shops = await db.collection<Shop>('shops').find().toArray();
+    return shops.map(({ _id, ...s }: any) => s);
   }
 
-  public getShopById(id?: string): Shop | undefined {
+  public async getShopById(id?: string): Promise<Shop | undefined> {
     if (!id || !id.trim()) return undefined;
+    await this.ensureInit();
+    const db = await getDb();
     const cleanId = id.trim().toLowerCase();
-    const foundDirect =
-      this.data.shops.find((s) => s.id === id) ||
-      this.data.shops.find(
-        (s) =>
-          s.id.toLowerCase() === cleanId ||
-          s.slug?.toLowerCase() === cleanId ||
-          s.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') === cleanId
-      );
-    if (foundDirect) return foundDirect;
 
-    const merchant = this.data.merchants.find(
-      (m) =>
-        m.id.toLowerCase() === cleanId ||
-        m.email.toLowerCase() === cleanId ||
-        m.shopId.toLowerCase() === cleanId
-    );
-    if (merchant) {
-      return this.data.shops.find((s) => s.id === merchant.shopId || s.slug === merchant.shopId);
+    // 1. Direct match on id, slug, or normalized name
+    let shop = await db.collection<Shop>('shops').findOne({
+      $or: [
+        { id: id },
+        { id: new RegExp('^' + cleanId + '$', 'i') },
+        { slug: new RegExp('^' + cleanId + '$', 'i') },
+      ],
+    });
+    if (shop) {
+      const { _id, ...cleanShop }: any = shop;
+      return cleanShop;
     }
+
+    // 2. Check if cleanId matches a merchant id or merchant email
+    const merchant = await db.collection<Merchant>('merchants').findOne({
+      $or: [
+        { id: cleanId },
+        { id: new RegExp('^' + cleanId + '$', 'i') },
+        { email: new RegExp('^' + cleanId + '$', 'i') },
+      ],
+    });
+    if (merchant) {
+      const matchedShop = await db.collection<Shop>('shops').findOne({
+        $or: [{ id: merchant.shopId }, { slug: merchant.shopId }],
+      });
+      if (matchedShop) {
+        const { _id, ...cleanShop }: any = matchedShop;
+        return cleanShop;
+      }
+    }
+
     return undefined;
   }
 
-  public saveShop(shopData: Partial<Shop> & { name: string; address: string; phone: string; latitude: number; longitude: number }): Shop {
-    const existingIndex = shopData.id ? this.data.shops.findIndex((s) => s.id === shopData.id) : -1;
+  public async saveShop(shopData: Partial<Shop> & { name: string; address: string; phone: string; latitude: number; longitude: number }): Promise<Shop> {
+    await this.ensureInit();
+    const db = await getDb();
     const now = new Date().toISOString();
-    let shop: Shop;
 
-    if (existingIndex >= 0) {
+    const targetId = shopData.id;
+    let existingShop: Shop | null = null;
+    if (targetId) {
+      existingShop = await db.collection<Shop>('shops').findOne({ id: targetId });
+    }
+
+    let shop: Shop;
+    if (existingShop) {
+      const { _id, ...prev }: any = existingShop;
       shop = {
-        ...this.data.shops[existingIndex],
+        ...prev,
         ...shopData,
         updatedAt: now,
       };
-      this.data.shops[existingIndex] = shop;
     } else {
-      const slug = shopData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const slug = shopData.slug || shopData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       shop = {
         id: shopData.id || `shop-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
         name: shopData.name,
-        slug: shopData.slug || slug,
+        slug,
         category: shopData.category || 'Retail Store',
         address: shopData.address,
         phone: shopData.phone,
@@ -245,117 +170,161 @@ class DatabaseStore {
         createdAt: now,
         updatedAt: now,
       };
-      this.data.shops.push(shop);
     }
 
-    this.saveToDisk();
+    const { _id, ...dataToSave }: any = shop;
+    await db.collection('shops').updateOne({ id: shop.id }, { $set: dataToSave }, { upsert: true });
     return shop;
   }
 
-  public deleteShop(id: string): boolean {
-    const prevLen = this.data.shops.length;
-    this.data.shops = this.data.shops.filter((s) => s.id !== id);
-    // Cascade cleanup
-    this.data.merchants = this.data.merchants.filter((m) => m.shopId !== id);
-    this.data.merchantSessions = this.data.merchantSessions.filter((ms) => ms.shopId !== id);
-    this.saveToDisk();
-    return this.data.shops.length < prevLen;
+  public async deleteShop(id: string): Promise<boolean> {
+    await this.ensureInit();
+    const db = await getDb();
+    const res = await db.collection('shops').deleteOne({ id });
+    await db.collection('merchants').deleteMany({ shopId: id });
+    await db.collection('merchantSessions').deleteMany({ shopId: id });
+    return res.deletedCount ? res.deletedCount > 0 : false;
   }
 
   // --- MERCHANTS ---
-  public getMerchants(): Array<Merchant & { shop?: Shop }> {
-    return this.data.merchants.map((m) => ({
+  public async getMerchants(): Promise<Array<Merchant & { shop?: Shop }>> {
+    await this.ensureInit();
+    const db = await getDb();
+    const merchants = await db.collection<Merchant>('merchants').find().toArray();
+    const shops = await this.getShops();
+
+    return merchants.map(({ _id, ...m }: any) => ({
       ...m,
-      shop: this.data.shops.find((s) => s.id === m.shopId || s.slug === m.shopId) || this.getShopById(m.shopId),
+      shop: shops.find((s) => s.id === m.shopId || s.slug === m.shopId),
     }));
   }
 
-  public getMerchantById(id: string): Merchant | undefined {
-    return this.data.merchants.find((m) => m.id === id);
-  }
-
-  public getMerchantByEmail(email: string): Merchant | undefined {
-    return this.data.merchants.find((m) => m.email.toLowerCase() === email.toLowerCase());
-  }
-
-  public getMerchantByGoogleId(googleId: string): Merchant | undefined {
-    return this.data.merchants.find((m) => m.googleId === googleId);
-  }
-
-  public getMerchantByGoogleEmail(googleEmail: string): Merchant | undefined {
-    return this.data.merchants.find(
-      (m) => m.googleEmail?.toLowerCase() === googleEmail.toLowerCase() ||
-             m.email.toLowerCase() === googleEmail.toLowerCase()
-    );
-  }
-
-  public getMerchantByShopId(shopId: string): Merchant | undefined {
-    return this.data.merchants.find((m) => m.shopId === shopId);
-  }
-
-  public saveMerchant(merchantData: Partial<Merchant> & { shopId: string; email: string; name: string; passwordHash: string }): Merchant {
-    const existingIndex = merchantData.id ? this.data.merchants.findIndex((m) => m.id === merchantData.id) : -1;
-    const now = new Date().toISOString();
-    let merchant: Merchant;
-
-    if (existingIndex >= 0) {
-      merchant = {
-        ...this.data.merchants[existingIndex],
-        ...merchantData,
-      };
-      this.data.merchants[existingIndex] = merchant;
-    } else {
-      merchant = {
-        id: merchantData.id || `merchant-${Date.now().toString(36)}`,
-        shopId: merchantData.shopId,
-        email: merchantData.email,
-        passwordHash: merchantData.passwordHash,
-        name: merchantData.name,
-        phone: merchantData.phone,
-        isActive: merchantData.isActive ?? true,
-        createdAt: now,
-      };
-      this.data.merchants.push(merchant);
-    }
-
-    this.saveToDisk();
+  public async getMerchantById(id: string): Promise<Merchant | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+    const m = await db.collection<Merchant>('merchants').findOne({ id });
+    if (!m) return undefined;
+    const { _id, ...merchant }: any = m;
     return merchant;
   }
 
-  public deleteMerchant(id: string): boolean {
-    const prev = this.data.merchants.length;
-    this.data.merchants = this.data.merchants.filter((m) => m.id !== id);
-    this.saveToDisk();
-    return this.data.merchants.length < prev;
+  public async getMerchantByEmail(email: string): Promise<Merchant | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+    const cleanEmail = email.trim().toLowerCase();
+    const m = await db.collection<Merchant>('merchants').findOne({ email: new RegExp('^' + cleanEmail + '$', 'i') });
+    if (!m) return undefined;
+    const { _id, ...merchant }: any = m;
+    return merchant;
+  }
+
+  public async getMerchantByGoogleId(googleId: string): Promise<Merchant | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+    const m = await db.collection<Merchant>('merchants').findOne({ googleId });
+    if (!m) return undefined;
+    const { _id, ...merchant }: any = m;
+    return merchant;
+  }
+
+  public async getMerchantByGoogleEmail(googleEmail: string): Promise<Merchant | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+    const clean = googleEmail.trim().toLowerCase();
+    const m = await db.collection<Merchant>('merchants').findOne({
+      $or: [
+        { googleEmail: new RegExp('^' + clean + '$', 'i') },
+        { email: new RegExp('^' + clean + '$', 'i') },
+      ],
+    });
+    if (!m) return undefined;
+    const { _id, ...merchant }: any = m;
+    return merchant;
+  }
+
+  public async getMerchantByShopId(shopId: string): Promise<Merchant | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+    const m = await db.collection<Merchant>('merchants').findOne({ shopId });
+    if (!m) return undefined;
+    const { _id, ...merchant }: any = m;
+    return merchant;
+  }
+
+  public async saveMerchant(merchantData: Partial<Merchant> & { shopId: string; email: string; name: string; passwordHash: string }): Promise<Merchant> {
+    await this.ensureInit();
+    const db = await getDb();
+    const now = new Date().toISOString();
+
+    const targetId = merchantData.id || `merchant-${Date.now().toString(36)}`;
+    const existing = await db.collection<Merchant>('merchants').findOne({ id: targetId });
+
+    let merchant: Merchant;
+    if (existing) {
+      const { _id, ...prev }: any = existing;
+      merchant = {
+        ...prev,
+        ...merchantData,
+        id: targetId,
+      };
+    } else {
+      merchant = {
+        id: targetId,
+        shopId: merchantData.shopId,
+        email: merchantData.email.trim(),
+        passwordHash: merchantData.passwordHash,
+        name: merchantData.name.trim(),
+        phone: merchantData.phone || '',
+        isActive: merchantData.isActive ?? true,
+        createdAt: now,
+        googleEmail: merchantData.googleEmail,
+        loginType: merchantData.loginType,
+      };
+    }
+
+    const { _id, ...dataToSave }: any = merchant;
+    await db.collection('merchants').updateOne({ id: merchant.id }, { $set: dataToSave }, { upsert: true });
+    return merchant;
+  }
+
+  public async deleteMerchant(id: string): Promise<boolean> {
+    await this.ensureInit();
+    const db = await getDb();
+    const res = await db.collection('merchants').deleteOne({ id });
+    return res.deletedCount ? res.deletedCount > 0 : false;
   }
 
   // --- SESSIONS ---
-  public getMerchantSessions(shopId?: string): MerchantSession[] {
-    if (shopId) {
-      return this.data.merchantSessions.filter((s) => s.shopId === shopId);
-    }
-    return this.data.merchantSessions;
+  public async getMerchantSessions(shopId?: string): Promise<MerchantSession[]> {
+    await this.ensureInit();
+    const db = await getDb();
+    const query = shopId ? { shopId } : {};
+    const sessions = await db.collection<MerchantSession>('merchantSessions').find(query).toArray();
+    return sessions.map(({ _id, ...s }: any) => s);
   }
 
-  public registerOrUpdateSession(
+  public async registerOrUpdateSession(
     merchantId: string,
     shopId: string,
     isCounterActive = true,
     deviceInfo = 'Web Terminal',
     ipAddress?: string
-  ): MerchantSession {
-    const existingIndex = this.data.merchantSessions.findIndex((s) => s.merchantId === merchantId);
+  ): Promise<MerchantSession> {
+    await this.ensureInit();
+    const db = await getDb();
     const now = new Date().toISOString();
+
+    const existing = await db.collection<MerchantSession>('merchantSessions').findOne({ merchantId });
     let session: MerchantSession;
 
-    if (existingIndex >= 0) {
+    if (existing) {
+      const { _id, ...prev }: any = existing;
       session = {
-        ...this.data.merchantSessions[existingIndex],
+        ...prev,
         isCounterActive,
         lastHeartbeat: now,
-        ipAddress: ipAddress || this.data.merchantSessions[existingIndex].ipAddress,
+        ipAddress: ipAddress || prev.ipAddress,
       };
-      this.data.merchantSessions[existingIndex] = session;
     } else {
       session = {
         id: `session-${Date.now().toString(36)}`,
@@ -368,40 +337,50 @@ class DatabaseStore {
         lastHeartbeat: now,
         createdAt: now,
       };
-      this.data.merchantSessions.push(session);
     }
 
-    this.saveToDisk();
+    const { _id, ...dataToSave }: any = session;
+    await db.collection('merchantSessions').updateOne({ merchantId }, { $set: dataToSave }, { upsert: true });
     return session;
   }
 
-  public setCounterMode(merchantId: string, active: boolean): boolean {
-    const session = this.data.merchantSessions.find((s) => s.merchantId === merchantId);
-    if (session) {
-      session.isCounterActive = active;
-      session.lastHeartbeat = new Date().toISOString();
-      this.saveToDisk();
-      return true;
+  public async setCounterMode(merchantId: string, active: boolean): Promise<boolean> {
+    await this.ensureInit();
+    const db = await getDb();
+    const res = await db.collection('merchantSessions').updateOne(
+      { merchantId },
+      { $set: { isCounterActive: active, lastHeartbeat: new Date().toISOString() } }
+    );
+    return res.modifiedCount > 0;
+  }
+
+  // --- OFFERS / REWARDS ---
+  public async getOffers(): Promise<Offer[]> {
+    await this.ensureInit();
+    const db = await getDb();
+    const offers = await db.collection<Offer>('rewards').find().toArray();
+    return offers.map(({ _id, ...o }: any) => o);
+  }
+
+  public async getDefaultOffer(): Promise<Offer> {
+    const offers = await this.getOffers();
+    return offers[0] || INITIAL_OFFERS[0];
+  }
+
+  public async getShopOffer(shopId: string): Promise<Offer> {
+    await this.ensureInit();
+    const db = await getDb();
+    const offer = await db.collection<Offer>('rewards').findOne({
+      $or: [{ id: shopId }, { id: `offer-${shopId}` }, { shopId: shopId }],
+    });
+    if (offer) {
+      const { _id, ...clean }: any = offer;
+      return clean;
     }
-    return false;
-  }
-
-  // --- OFFERS ---
-  public getOffers(): Offer[] {
-    return this.data.offers;
-  }
-
-  public getDefaultOffer(): Offer {
-    return this.data.offers[0] || INITIAL_OFFERS[0];
-  }
-
-  public getShopOffer(shopId: string): Offer {
-    const found = this.data.offers.find((o) => o.id === shopId || o.id === `offer-${shopId}`);
-    if (found) return found;
-    const defaultOff = this.getDefaultOffer();
+    const defaultOff = await this.getDefaultOffer();
     return {
       ...defaultOff,
-      title: defaultOff.title || "Get 5% discount on your total bill after 8 visits",
+      title: defaultOff.title || 'Get 5% discount on your total bill after 8 visits',
       visitsRequired: defaultOff.visitsRequired || 8,
       expiryDays: defaultOff.expiryDays || 30,
     };
@@ -423,9 +402,20 @@ class DatabaseStore {
     return false;
   }
 
-  public updateShopOffer(shopId: string, offerData: { title?: string; description?: string; visitsRequired?: number; expiryDays?: number; expiryDate?: string; image?: string; terms?: string; discountPercent?: number; isActive?: boolean }): Offer {
-    let offer = this.data.offers.find((o) => o.id === shopId || o.id === `offer-${shopId}`);
-    if (!offer) {
+  public async updateShopOffer(
+    shopId: string,
+    offerData: { title?: string; description?: string; visitsRequired?: number; expiryDays?: number; expiryDate?: string; image?: string; terms?: string; discountPercent?: number; isActive?: boolean; merchantId?: string }
+  ): Promise<Offer> {
+    await this.ensureInit();
+    const db = await getDb();
+    const now = new Date().toISOString();
+
+    const existing = await db.collection<Offer>('rewards').findOne({
+      $or: [{ id: shopId }, { id: `offer-${shopId}` }, { shopId: shopId }],
+    });
+
+    let offer: Offer;
+    if (!existing) {
       offer = {
         id: `offer-${shopId}`,
         title: offerData.title || 'Get 5% discount on your total bill after 8 visits',
@@ -437,39 +427,46 @@ class DatabaseStore {
         expiryDays: offerData.expiryDays || 30,
         expiryDate: offerData.expiryDate || undefined,
         image: offerData.image || '',
-        createdAt: new Date().toISOString(),
+        createdAt: now,
       };
-      this.data.offers.push(offer);
     } else {
-      if (offerData.title !== undefined) offer.title = offerData.title;
-      if (offerData.description !== undefined) offer.description = offerData.description;
-      if (offerData.visitsRequired !== undefined) offer.visitsRequired = offerData.visitsRequired;
-      if (offerData.expiryDays !== undefined) offer.expiryDays = offerData.expiryDays;
-      if (offerData.expiryDate !== undefined) offer.expiryDate = offerData.expiryDate;
-      if (offerData.image !== undefined) offer.image = offerData.image;
-      if (offerData.terms !== undefined) offer.terms = offerData.terms;
-      if (offerData.discountPercent !== undefined) offer.discountPercent = offerData.discountPercent;
-      if (offerData.isActive !== undefined) offer.isActive = offerData.isActive;
+      const { _id, ...prev }: any = existing;
+      offer = {
+        ...prev,
+        ...offerData,
+      };
     }
-    this.saveToDisk();
+
+    const { _id, ...dataToSave }: any = offer;
+    await db.collection('rewards').updateOne(
+      { id: offer.id },
+      { $set: { ...dataToSave, shopId, merchantId: offerData.merchantId || `merchant-${shopId}`, updatedAt: now } },
+      { upsert: true }
+    );
     return offer;
   }
 
   // --- CUSTOMERS ---
-  public getCustomers(): Customer[] {
-    return this.data.customers;
+  public async getCustomers(): Promise<Customer[]> {
+    await this.ensureInit();
+    const db = await getDb();
+    const customers = await db.collection<Customer>('customers').find().toArray();
+    return customers.map(({ _id, ...c }: any) => c);
   }
 
-  public findOrCreateCustomer(name: string, mobile: string): Customer {
+  public async findOrCreateCustomer(name: string, mobile: string): Promise<Customer> {
+    await this.ensureInit();
+    const db = await getDb();
     const cleanMobile = mobile.replace(/[^0-9]/g, '').slice(-10);
-    const existing = this.data.customers.find((c) => c.mobile === cleanMobile);
+
+    const existing = await db.collection<Customer>('customers').findOne({ mobile: cleanMobile });
     if (existing) {
-      // Update name if changed
-      if (name && existing.name !== name) {
-        existing.name = name;
-        this.saveToDisk();
+      if (name && existing.name !== name.trim()) {
+        await db.collection('customers').updateOne({ mobile: cleanMobile }, { $set: { name: name.trim() } });
+        existing.name = name.trim();
       }
-      return existing;
+      const { _id, ...cleanCust }: any = existing;
+      return cleanCust;
     }
 
     const customer: Customer = {
@@ -478,53 +475,50 @@ class DatabaseStore {
       mobile: cleanMobile,
       createdAt: new Date().toISOString(),
     };
-    this.data.customers.push(customer);
-    this.saveToDisk();
+
+    await db.collection('customers').insertOne(customer);
     return customer;
   }
 
-  // --- CLAIMS ---
-  public getClaims(shopId?: string): Claim[] {
-    if (shopId) {
-      return this.data.claims
-        .filter((c) => c.shopId === shopId)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }
-    return [...this.data.claims].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+  // --- CLAIMS & DUPLICATE PREVENTION ---
+  public async getClaims(shopId?: string): Promise<Claim[]> {
+    await this.ensureInit();
+    const db = await getDb();
+    const query = shopId ? { shopId } : {};
+    const claims = await db.collection<Claim>('claims').find(query).sort({ createdAt: -1 }).toArray();
+    return claims.map(({ _id, ...c }: any) => c);
   }
 
-  public getClaimById(id: string): Claim | undefined {
-    return this.data.claims.find((c) => c.id === id);
+  public async getClaimById(id: string): Promise<Claim | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+    const claim = await db.collection<Claim>('claims').findOne({ id });
+    if (!claim) return undefined;
+    const { _id, ...clean }: any = claim;
+    return clean;
   }
 
-  public hasScannedToday(mobileOrId: string, shopId: string): Claim | undefined {
+  public async hasScannedToday(mobileOrId: string, shopId: string): Promise<Claim | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
     const cleanMobile = mobileOrId.replace(/[^0-9]/g, '').slice(-10);
     const todayStr = new Date().toISOString().slice(0, 10);
 
-    return this.data.claims.find((c) => {
-      const isCustomer =
-        c.customerId === mobileOrId ||
-        (Boolean(cleanMobile) && c.customerMobile === cleanMobile);
-      const isShop = c.shopId === shopId;
-      const claimDate = new Date(c.createdAt).toISOString().slice(0, 10);
-      return isCustomer && isShop && claimDate === todayStr;
+    const claim = await db.collection<Claim>('claims').findOne({
+      shopId,
+      dateStr: todayStr,
+      $or: [
+        { customerId: mobileOrId },
+        { customerMobile: cleanMobile },
+      ],
     });
+
+    if (!claim) return undefined;
+    const { _id, ...clean }: any = claim;
+    return clean;
   }
 
-  public checkRecentClaim(mobile: string, shopId: string): Claim | undefined {
-    const cleanMobile = mobile.replace(/[^0-9]/g, '').slice(-10);
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    return this.data.claims.find(
-      (c) =>
-        c.customerMobile === cleanMobile &&
-        c.shopId === shopId &&
-        new Date(c.createdAt).getTime() > oneDayAgo
-    );
-  }
-
-  public createClaim(params: {
+  public async createClaim(params: {
     customerName: string;
     customerMobile: string;
     shopId: string;
@@ -532,19 +526,23 @@ class DatabaseStore {
     customerLat?: number;
     customerLng?: number;
     distanceMeters?: number;
-  }): Claim {
-    const shop = this.getShopById(params.shopId);
+  }): Promise<Claim> {
+    await this.ensureInit();
+    const db = await getDb();
+
+    const shop = await this.getShopById(params.shopId);
     if (!shop) throw new Error('Shop not found');
 
-    const customer = this.findOrCreateCustomer(params.customerName, params.customerMobile);
-    const offer = this.getShopOffer(shop.id);
+    const customer = await this.findOrCreateCustomer(params.customerName, params.customerMobile);
+    const offer = await this.getShopOffer(shop.id);
 
-    const currentStamps = this.getCustomerStampCount(params.customerMobile, shop.id);
+    const currentStamps = await this.getCustomerStampCount(params.customerMobile, shop.id);
     const is8thStamp = currentStamps >= 7;
     const rewardCode = `TREAT-${Math.floor(1000 + Math.random() * 9000)}`;
     const claimCode = `SCR-${Math.floor(1000 + Math.random() * 9000)}`;
+    const todayStr = new Date().toISOString().slice(0, 10);
 
-    const claim: Claim = {
+    const claim: Claim & { dateStr: string } = {
       id: `claim-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
       claimCode,
       customerId: customer.id,
@@ -564,66 +562,130 @@ class DatabaseStore {
       is8thStampReward: is8thStamp,
       rewardCode: rewardCode,
       isRedeemed: false,
+      dateStr: todayStr,
       createdAt: new Date().toISOString(),
     };
 
-    this.data.claims.unshift(claim);
-    this.saveToDisk();
+    await db.collection('claims').insertOne(claim);
     return claim;
   }
 
-  public updateClaimStatus(
+  public async updateClaimStatus(
     claimId: string,
     status: ClaimStatus,
     resolvedBy?: string,
     rejectionReason?: string
-  ): Claim | undefined {
-    const claim = this.data.claims.find((c) => c.id === claimId);
+  ): Promise<Claim | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+
+    const claim = await this.getClaimById(claimId);
     if (!claim) return undefined;
 
-    claim.status = status;
-    claim.resolvedAt = new Date().toISOString();
-    if (resolvedBy) claim.resolvedBy = resolvedBy;
-    if (rejectionReason) claim.rejectionReason = rejectionReason;
+    const resolvedAt = new Date().toISOString();
+    const updateFields: any = {
+      status,
+      resolvedAt,
+    };
+    if (resolvedBy) updateFields.resolvedBy = resolvedBy;
+    if (rejectionReason) updateFields.rejectionReason = rejectionReason;
 
-    this.saveToDisk();
-    return claim;
+    await db.collection('claims').updateOne({ id: claimId }, { $set: updateFields });
+
+    // Increment customer stamp count in MongoDB stampCards collection on ACCEPTED
+    if (status === 'ACCEPTED') {
+      await this.incrementCustomerStamp(claim.customerMobile, claim.shopId, claim.id, resolvedBy);
+    }
+
+    return {
+      ...claim,
+      ...updateFields,
+    };
   }
 
-  public markClaimRedeemed(claimId: string, resolvedBy?: string): Claim | undefined {
-    const claim = this.data.claims.find((c) => c.id === claimId);
+  public async markClaimRedeemed(claimId: string, resolvedBy?: string): Promise<Claim | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+
+    const claim = await this.getClaimById(claimId);
     if (!claim) return undefined;
 
-    claim.status = 'ACCEPTED';
-    claim.isRedeemed = true;
-    claim.resolvedAt = new Date().toISOString();
-    if (resolvedBy) claim.resolvedBy = resolvedBy;
+    const resolvedAt = new Date().toISOString();
+    await db.collection('claims').updateOne(
+      { id: claimId },
+      { $set: { status: 'ACCEPTED', isRedeemed: true, resolvedAt, resolvedBy } }
+    );
+    await this.incrementCustomerStamp(claim.customerMobile, claim.shopId, claim.id, resolvedBy);
 
-    this.saveToDisk();
-    return claim;
+    return { ...claim, status: 'ACCEPTED', isRedeemed: true, resolvedAt, resolvedBy };
   }
 
-  public markScratchRevealed(claimId: string): Claim | undefined {
-    const claim = this.data.claims.find((c) => c.id === claimId);
-    if (!claim) return undefined;
-    claim.scratchRevealed = true;
-    this.saveToDisk();
-    return claim;
+  public async markScratchRevealed(claimId: string): Promise<Claim | undefined> {
+    await this.ensureInit();
+    const db = await getDb();
+    await db.collection('claims').updateOne({ id: claimId }, { $set: { scratchRevealed: true } });
+    return this.getClaimById(claimId);
   }
 
-  // --- THE INTELLIGENT SHOP RESOLVER ---
-  /**
-   * Resolves the shop without requiring the customer to pick or enter a code.
-   * Priority:
-   * 1. Simulated Shop (for testing)
-   * 2. GPS Geofence (Haversine distance within radiusMeters)
-   * 3. IP / Wi-Fi Match
-   * 4. Active Merchant Counter Session Pairing
-   */
-  public resolveShop(req: ResolveShopRequest): ResolveShopResponse {
-    const activeShops = this.data.shops.filter((s) => s.isActive);
+  // --- STAMP CARDS ---
+  public async getCustomerStampCount(mobile: string, shopId: string): Promise<number> {
+    await this.ensureInit();
+    const db = await getDb();
+    const cleanMobile = mobile.replace(/[^0-9]/g, '').slice(-10);
 
-    // 1. Simulation Override (for interactive testing bar)
+    const card = await db.collection('stampCards').findOne({ customerMobile: cleanMobile, shopId });
+    if (card && card.stampCount !== undefined) {
+      return card.stampCount;
+    }
+
+    const count = await db.collection('claims').countDocuments({
+      customerMobile: cleanMobile,
+      shopId,
+      status: 'ACCEPTED',
+    });
+    return count;
+  }
+
+  public async incrementCustomerStamp(
+    mobile: string,
+    shopId: string,
+    claimId: string,
+    approvedBy?: string
+  ): Promise<number> {
+    await this.ensureInit();
+    const db = await getDb();
+    const cleanMobile = mobile.replace(/[^0-9]/g, '').slice(-10);
+    const now = new Date().toISOString();
+    const shop = await this.getShopById(shopId);
+
+    const filter = { customerMobile: cleanMobile, shopId };
+    const update = {
+      $inc: { stampCount: 1 },
+      $set: {
+        customerMobile: cleanMobile,
+        shopId,
+        shopName: shop?.name || 'Partner Shop',
+        lastUpdated: now,
+      },
+      $push: {
+        history: { claimId, approvedAt: now, approvedBy } as any,
+      },
+    };
+
+    const res = await db.collection('stampCards').findOneAndUpdate(filter, update, {
+      upsert: true,
+      returnDocument: 'after',
+    });
+
+    return res?.stampCount || (await this.getCustomerStampCount(cleanMobile, shopId));
+  }
+
+  // --- INTELLIGENT SHOP RESOLVER ---
+  public async resolveShop(req: ResolveShopRequest): Promise<ResolveShopResponse> {
+    await this.ensureInit();
+    const allShops = await this.getShops();
+    const activeShops = allShops.filter((s) => s.isActive);
+
     if (req.simulatedShopId) {
       const shop = activeShops.find((s) => s.id === req.simulatedShopId);
       if (shop) {
@@ -637,7 +699,6 @@ class DatabaseStore {
       }
     }
 
-    // 2. GPS Geofencing Resolution
     if (req.latitude !== undefined && req.longitude !== undefined) {
       const candidates = activeShops
         .map((shop) => {
@@ -663,7 +724,6 @@ class DatabaseStore {
         };
       }
 
-      // If close to a shop within 250m (e.g. slight GPS drift in mall)
       if (closest && closest.distanceMeters <= 250) {
         return {
           success: true,
@@ -676,7 +736,6 @@ class DatabaseStore {
       }
     }
 
-    // 3. Wi-Fi / IP Match
     if (req.clientIp) {
       const ipMatch = activeShops.find((s) => s.wifiIp && s.wifiIp === req.clientIp);
       if (ipMatch) {
@@ -690,17 +749,13 @@ class DatabaseStore {
       }
     }
 
-    // 4. Active Merchant Counter Session Pairing (Device-based fallback)
-    // Find active sessions that had a heartbeat in last 15 minutes and counter mode ON
+    const sessions = await this.getMerchantSessions();
     const fifteenMinsAgo = Date.now() - 15 * 60 * 1000;
-    const activeSessions = this.data.merchantSessions.filter(
-      (ms) =>
-        ms.isCounterActive &&
-        new Date(ms.lastHeartbeat).getTime() > fifteenMinsAgo
+    const activeSessions = sessions.filter(
+      (ms) => ms.isCounterActive && new Date(ms.lastHeartbeat).getTime() > fifteenMinsAgo
     );
 
     if (activeSessions.length > 0) {
-      // Find the shop with active counter
       const activeShop = activeShops.find((s) => s.id === activeSessions[0].shopId);
       if (activeShop) {
         return {
@@ -720,8 +775,9 @@ class DatabaseStore {
   }
 
   // --- STATS ---
-  public getStats(shopId?: string) {
-    const claims = this.getClaims(shopId);
+  public async getStats(shopId?: string): Promise<any> {
+    await this.ensureInit();
+    const claims = await this.getClaims(shopId);
     const totalClaims = claims.length;
     const pendingClaims = claims.filter((c) => c.status === 'PENDING').length;
     const acceptedClaims = claims.filter((c) => c.status === 'ACCEPTED').length;
@@ -730,6 +786,11 @@ class DatabaseStore {
     const todayClaims = claims.filter((c) => c.createdAt.startsWith(today)).length;
     const acceptanceRate = totalClaims > 0 ? Math.round((acceptedClaims / totalClaims) * 100) : 0;
 
+    const shops = await this.getShops();
+    const merchants = await this.getMerchants();
+    const customers = await this.getCustomers();
+    const scans = await this.getQrScans();
+
     return {
       totalClaims,
       pendingClaims,
@@ -737,16 +798,18 @@ class DatabaseStore {
       rejectedClaims,
       todayClaims,
       acceptanceRate,
-      totalShops: this.data.shops.length,
-      totalMerchants: this.data.merchants.length,
-      totalCustomers: this.data.customers.length,
-      totalQrScans: this.data.qrScans.length,
+      totalShops: shops.length,
+      totalMerchants: merchants.length,
+      totalCustomers: customers.length,
+      totalQrScans: scans.length,
     };
   }
 
   // --- QR SCANS ---
-  public logQrScan(shopId: string, userAgent?: string): QrScan {
-    const shop = this.getShopById(shopId);
+  public async logQrScan(shopId: string, userAgent?: string): Promise<QrScan> {
+    await this.ensureInit();
+    const db = await getDb();
+    const shop = await this.getShopById(shopId);
     const scan: QrScan = {
       id: `scan-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
       shopId,
@@ -754,53 +817,50 @@ class DatabaseStore {
       scannedAt: new Date().toISOString(),
       userAgent,
     };
-    this.data.qrScans.push(scan);
-    this.saveToDisk();
+    await db.collection('scans').insertOne(scan);
     return scan;
   }
 
-  public getQrScans(shopId?: string): QrScan[] {
-    if (shopId) {
-      return this.data.qrScans.filter((s) => s.shopId === shopId);
-    }
-    return [...this.data.qrScans];
+  public async getQrScans(shopId?: string): Promise<QrScan[]> {
+    await this.ensureInit();
+    const db = await getDb();
+    const query = shopId ? { shopId } : {};
+    const scans = await db.collection<QrScan>('scans').find(query).toArray();
+    return scans.map(({ _id, ...s }: any) => s);
   }
 
-  // --- SHOP ANALYTICS (per-merchant detailed stats) ---
-  public getShopAnalytics(baseUrl = 'http://localhost:3000'): ShopAnalytics[] {
+  // --- SHOP ANALYTICS ---
+  public async getShopAnalytics(baseUrl = 'http://localhost:3000'): Promise<ShopAnalytics[]> {
+    await this.ensureInit();
     const today = new Date().toISOString().slice(0, 10);
 
-    return this.data.shops.map((shop) => {
-      const merchant = this.data.merchants.find((m) => m.shopId === shop.id);
-      const claims = this.data.claims.filter((c) => c.shopId === shop.id);
-      const scans = this.data.qrScans.filter((s) => s.shopId === shop.id);
-      const uniqueCustomerMobiles = new Set(claims.map((c) => c.customerMobile));
+    const shops = await this.getShops();
+    const merchants = await this.getMerchants();
+    const claims = await this.getClaims();
+    const scans = await this.getQrScans();
+
+    return shops.map((shop) => {
+      const merchant = merchants.find((m) => m.shopId === shop.id);
+      const shopClaims = claims.filter((c) => c.shopId === shop.id);
+      const shopScans = scans.filter((s) => s.shopId === shop.id);
+      const uniqueCustomerMobiles = new Set(shopClaims.map((c) => c.customerMobile));
 
       return {
         shopId: shop.id,
         shopName: shop.name,
         merchantName: merchant?.name || 'Unassigned',
         merchantEmail: merchant?.email || '-',
-        qrScanCount: scans.length,
+        qrScanCount: shopScans.length,
         uniqueCustomers: uniqueCustomerMobiles.size,
-        totalClaims: claims.length,
-        pendingClaims: claims.filter((c) => c.status === 'PENDING').length,
-        acceptedClaims: claims.filter((c) => c.status === 'ACCEPTED').length,
-        rejectedClaims: claims.filter((c) => c.status === 'REJECTED').length,
-        todayScans: scans.filter((s) => s.scannedAt.startsWith(today)).length,
-        todayClaims: claims.filter((c) => c.createdAt.startsWith(today)).length,
+        totalClaims: shopClaims.length,
+        pendingClaims: shopClaims.filter((c) => c.status === 'PENDING').length,
+        acceptedClaims: shopClaims.filter((c) => c.status === 'ACCEPTED').length,
+        rejectedClaims: shopClaims.filter((c) => c.status === 'REJECTED').length,
+        todayScans: shopScans.filter((s) => s.scannedAt.startsWith(today)).length,
+        todayClaims: shopClaims.filter((c) => c.createdAt.startsWith(today)).length,
         qrUrl: `${baseUrl}/shop/${shop.slug}`,
       };
     });
-  }
-
-  // --- LOYALTY STAMPS ---
-  public getCustomerStampCount(mobile: string, shopId: string): number {
-    const cleanMobile = mobile.replace(/[^0-9]/g, '').slice(-10);
-    const accepted = this.data.claims.filter(
-      (c) => c.customerMobile === cleanMobile && c.shopId === shopId && c.status === 'ACCEPTED'
-    );
-    return accepted.length;
   }
 }
 
@@ -808,5 +868,3 @@ class DatabaseStore {
 const globalForDb = globalThis as unknown as { dbStore?: DatabaseStore };
 export const db = globalForDb.dbStore || new DatabaseStore();
 globalForDb.dbStore = db;
-
-

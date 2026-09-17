@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const shopId = searchParams.get('shopId') || undefined;
   const mobile = searchParams.get('mobile')?.replace(/[^0-9]/g, '').slice(-10) || undefined;
-  const claims = db.getClaims(shopId).filter((claim) => !mobile || claim.customerMobile === mobile);
+  const allClaims = await db.getClaims(shopId);
+  const claims = allClaims.filter((claim) => !mobile || claim.customerMobile === mobile);
   return NextResponse.json({ success: true, claims });
 }
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const shop = db.getShopById(body.shopId.trim());
+    const shop = await db.getShopById(body.shopId.trim());
     if (!shop) {
       return NextResponse.json(
         { success: false, message: 'Invalid shop or merchant identification. Please scan a valid merchant QR code.' },
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const offer = db.getShopOffer(shop.id);
+    const offer = await db.getShopOffer(shop.id);
     if (db.isOfferExpired(offer)) {
       return NextResponse.json(
         { success: false, message: `Reward offer for ${shop.name} has expired and cannot be claimed.` },
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Strict 1-scan-per-day restriction per customer per merchant handled on backend/database
-    const existingTodayClaim = db.hasScannedToday(cleanMobile, body.shopId);
+    const existingTodayClaim = await db.hasScannedToday(cleanMobile, body.shopId);
     if (existingTodayClaim) {
       return NextResponse.json(
         {
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const claim = db.createClaim({
+    const claim = await db.createClaim({
       customerName: body.name.trim(),
       customerMobile: cleanMobile,
       shopId: body.shopId,

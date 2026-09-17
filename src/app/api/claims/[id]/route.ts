@@ -6,12 +6,12 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const claim = db.getClaimById(params.id);
+  const claim = await db.getClaimById(params.id);
   if (!claim) {
     return NextResponse.json({ success: false, message: 'Claim not found' }, { status: 404 });
   }
 
-  const stampCount = db.getCustomerStampCount(claim.customerMobile, claim.shopId);
+  const stampCount = await db.getCustomerStampCount(claim.customerMobile, claim.shopId);
   return NextResponse.json({
     success: true,
     claim,
@@ -29,17 +29,17 @@ export async function PATCH(
     const body = await req.json();
     const { status, resolvedBy, rejectionReason, scratchRevealed } = body;
 
-    let claim = db.getClaimById(params.id);
+    let claim = await db.getClaimById(params.id);
     if (!claim) {
       return NextResponse.json({ success: false, message: 'Claim not found' }, { status: 404 });
     }
 
     if (scratchRevealed) {
-      claim = db.markScratchRevealed(params.id);
+      claim = await db.markScratchRevealed(params.id);
     }
 
     if (status && ['ACCEPTED', 'REJECTED', 'PENDING'].includes(status)) {
-      claim = db.updateClaimStatus(
+      claim = await db.updateClaimStatus(
         params.id,
         status as ClaimStatus,
         resolvedBy,
@@ -47,7 +47,7 @@ export async function PATCH(
       );
     }
 
-    const stampCount = claim ? db.getCustomerStampCount(claim.customerMobile, claim.shopId) : 0;
+    const stampCount = claim ? await db.getCustomerStampCount(claim.customerMobile, claim.shopId) : 0;
 
     return NextResponse.json({
       success: true,

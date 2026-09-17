@@ -18,7 +18,7 @@ export async function POST(
     }
 
     const requestId = params.id;
-    const claim = db.getClaimById(requestId);
+    const claim = await db.getClaimById(requestId);
 
     if (!claim) {
       return NextResponse.json({ success: false, message: 'Card collection request not found.' }, { status: 404 });
@@ -48,7 +48,7 @@ export async function POST(
     const rejectionReason = body.reason || 'Merchant rejected your card collection request.';
 
     // Update status to REJECTED
-    const updatedClaim = db.updateClaimStatus(requestId, 'REJECTED', session.name || 'Merchant Cashier', rejectionReason);
+    const updatedClaim = await db.updateClaimStatus(requestId, 'REJECTED', session.name || 'Merchant Cashier', rejectionReason);
 
     return NextResponse.json({
       success: true,

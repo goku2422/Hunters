@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const realIp = req.headers.get('x-real-ip');
     const clientIp = body.clientIp || forwardedFor?.split(',')[0].trim() || realIp || undefined;
 
-    const result = db.resolveShop({
+    const result = await db.resolveShop({
       latitude: body.latitude,
       longitude: body.longitude,
       accuracy: body.accuracy,
