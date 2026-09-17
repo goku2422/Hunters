@@ -134,39 +134,52 @@ class DatabaseStore {
 
   public async getShopById(id?: string): Promise<Shop | undefined> {
     if (!id || !id.trim()) return undefined;
-    await this.ensureInit();
-    const db = await getDb();
     const cleanId = id.trim().toLowerCase();
 
-    // 1. Direct match on id, slug, or normalized name
-    let shop = await db.collection<Shop>('shops').findOne({
-      $or: [
-        { id: id },
-        { id: new RegExp('^' + cleanId + '$', 'i') },
-        { slug: new RegExp('^' + cleanId + '$', 'i') },
-      ],
-    });
-    if (shop) {
-      const { _id, ...cleanShop }: any = shop;
-      return cleanShop;
-    }
+    try {
+      await this.ensureInit();
+      const db = await getDb();
 
-    // 2. Check if cleanId matches a merchant id or merchant email
-    const merchant = await db.collection<Merchant>('merchants').findOne({
-      $or: [
-        { id: cleanId },
-        { id: new RegExp('^' + cleanId + '$', 'i') },
-        { email: new RegExp('^' + cleanId + '$', 'i') },
-      ],
-    });
-    if (merchant) {
-      const matchedShop = await db.collection<Shop>('shops').findOne({
-        $or: [{ id: merchant.shopId }, { slug: merchant.shopId }],
+      // 1. Direct match on id, slug, or normalized name
+      let shop = await db.collection<Shop>('shops').findOne({
+        $or: [
+          { id: id },
+          { id: new RegExp('^' + cleanId + '$', 'i') },
+          { slug: new RegExp('^' + cleanId + '$', 'i') },
+        ],
       });
-      if (matchedShop) {
-        const { _id, ...cleanShop }: any = matchedShop;
+      if (shop) {
+        const { _id, ...cleanShop }: any = shop;
         return cleanShop;
       }
+
+      // 2. Check if cleanId matches a merchant id or merchant email
+      const merchant = await db.collection<Merchant>('merchants').findOne({
+        $or: [
+          { id: cleanId },
+          { id: new RegExp('^' + cleanId + '$', 'i') },
+          { email: new RegExp('^' + cleanId + '$', 'i') },
+        ],
+      });
+      if (merchant) {
+        const matchedShop = await db.collection<Shop>('shops').findOne({
+          $or: [{ id: merchant.shopId }, { slug: merchant.shopId }],
+        });
+        if (matchedShop) {
+          const { _id, ...cleanShop }: any = matchedShop;
+          return cleanShop;
+        }
+      }
+    } catch (err) {
+      console.error('MongoDB query error in getShopById:', err);
+    }
+
+    const fallbackShop = INITIAL_SHOPS.find((s) => s.id === cleanId || s.slug === cleanId);
+    if (fallbackShop) return fallbackShop;
+
+    const fallbackMerchant = INITIAL_MERCHANTS.find((m) => m.id === cleanId || m.email.toLowerCase() === cleanId);
+    if (fallbackMerchant) {
+      return INITIAL_SHOPS.find((s) => s.id === fallbackMerchant.shopId);
     }
 
     return undefined;
@@ -238,12 +251,19 @@ class DatabaseStore {
   }
 
   public async getMerchantById(id: string): Promise<Merchant | undefined> {
-    await this.ensureInit();
-    const db = await getDb();
-    const m = await db.collection<Merchant>('merchants').findOne({ id });
-    if (!m) return undefined;
-    const { _id, ...merchant }: any = m;
-    return merchant;
+    try {
+      await this.ensureInit();
+      const db = await getDb();
+      const m = await db.collection<Merchant>('merchants').findOne({ id });
+      if (m) {
+        const { _id, ...merchant }: any = m;
+        return merchant;
+      }
+    } catch (err) {
+      console.error('MongoDB query error in getMerchantById:', err);
+    }
+    const fallback = INITIAL_MERCHANTS.find((im) => im.id === id);
+    return fallback;
   }
 
   public async getMerchantByEmail(email: string): Promise<Merchant | undefined> {
