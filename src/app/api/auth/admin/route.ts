@@ -52,10 +52,14 @@ export async function POST(req: NextRequest) {
     });
 
     return response;
-  } catch (error) {
-    console.error('Admin login error:', error);
+  } catch (error: any) {
+    console.error('Admin login error:', error?.stack || error);
     return NextResponse.json(
-      { success: false, message: 'Authentication failed.' },
+      {
+        success: false,
+        message: error?.message ? `Authentication failed: ${error.message}` : 'Authentication failed.',
+        details: String(error),
+      },
       { status: 500 }
     );
   }

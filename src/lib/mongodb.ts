@@ -28,5 +28,5 @@ export default clientPromise;
 
 export async function getDb(): Promise<Db> {
   const client = await clientPromise;
-  return client.db();
+  return client.db('flinty');
 }

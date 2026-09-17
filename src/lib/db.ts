@@ -93,8 +93,11 @@ class DatabaseStore {
   public async getAdminByEmail(email: string): Promise<AdminUser | undefined> {
     await this.ensureInit();
     const db = await getDb();
-    const cleanEmail = email.trim().toLowerCase();
-    let admin = await db.collection<AdminUser>('admins').findOne({ email: new RegExp('^' + cleanEmail + '$', 'i') });
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) return undefined;
+
+    const safeEscaped = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    let admin = await db.collection<AdminUser>('admins').findOne({ email: new RegExp('^' + safeEscaped + '$', 'i') });
 
     if (!admin) {
       const initAdmin = INITIAL_ADMINS.find((a) => a.email.toLowerCase() === cleanEmail);
