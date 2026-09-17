@@ -43,29 +43,43 @@ class DatabaseStore {
           await db.collection('claims').createIndex({ id: 1 }, { unique: true }).catch(() => {});
           await db.collection('stampCards').createIndex({ customerMobile: 1, shopId: 1 }, { unique: true }).catch(() => {});
 
-          // Seed if database collections are empty
+          // Seed admins if empty
+          const adminsCount = await db.collection('admins').countDocuments();
+          if (adminsCount === 0 && INITIAL_ADMINS.length > 0) {
+            console.log('Seeding initial admins to MongoDB Atlas...');
+            await db.collection('admins').insertMany(INITIAL_ADMINS).catch(() => {});
+          }
+
+          // Seed shops if empty
           const shopsCount = await db.collection('shops').countDocuments();
-          if (shopsCount === 0) {
-            console.log('Seeding initial MongoDB Atlas collections...');
-            if (INITIAL_ADMINS.length > 0) {
-              await db.collection('admins').insertMany(INITIAL_ADMINS).catch(() => {});
-            }
-            if (INITIAL_SHOPS.length > 0) {
-              await db.collection('shops').insertMany(INITIAL_SHOPS).catch(() => {});
-            }
-            if (INITIAL_MERCHANTS.length > 0) {
-              await db.collection('merchants').insertMany(INITIAL_MERCHANTS).catch(() => {});
-            }
-            if (INITIAL_OFFERS.length > 0) {
-              await db.collection('rewards').insertMany(INITIAL_OFFERS).catch(() => {});
-            }
-            if (INITIAL_CLAIMS.length > 0) {
-              const claimsWithDateStr = INITIAL_CLAIMS.map((c) => ({
-                ...c,
-                dateStr: c.createdAt ? c.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
-              }));
-              await db.collection('claims').insertMany(claimsWithDateStr).catch(() => {});
-            }
+          if (shopsCount === 0 && INITIAL_SHOPS.length > 0) {
+            console.log('Seeding initial shops to MongoDB Atlas...');
+            await db.collection('shops').insertMany(INITIAL_SHOPS).catch(() => {});
+          }
+
+          // Seed merchants if empty
+          const merchantsCount = await db.collection('merchants').countDocuments();
+          if (merchantsCount === 0 && INITIAL_MERCHANTS.length > 0) {
+            console.log('Seeding initial merchants to MongoDB Atlas...');
+            await db.collection('merchants').insertMany(INITIAL_MERCHANTS).catch(() => {});
+          }
+
+          // Seed offers if empty
+          const offersCount = await db.collection('rewards').countDocuments();
+          if (offersCount === 0 && INITIAL_OFFERS.length > 0) {
+            console.log('Seeding initial offers to MongoDB Atlas...');
+            await db.collection('rewards').insertMany(INITIAL_OFFERS).catch(() => {});
+          }
+
+          // Seed claims if empty
+          const claimsCount = await db.collection('claims').countDocuments();
+          if (claimsCount === 0 && INITIAL_CLAIMS.length > 0) {
+            console.log('Seeding initial claims to MongoDB Atlas...');
+            const claimsWithDateStr = INITIAL_CLAIMS.map((c) => ({
+              ...c,
+              dateStr: c.createdAt ? c.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+            }));
+            await db.collection('claims').insertMany(claimsWithDateStr).catch(() => {});
           }
         } catch (err) {
           console.error('Error initializing MongoDB Atlas connection:', err);
@@ -80,7 +94,16 @@ class DatabaseStore {
     await this.ensureInit();
     const db = await getDb();
     const cleanEmail = email.trim().toLowerCase();
-    const admin = await db.collection<AdminUser>('admins').findOne({ email: new RegExp('^' + cleanEmail + '$', 'i') });
+    let admin = await db.collection<AdminUser>('admins').findOne({ email: new RegExp('^' + cleanEmail + '$', 'i') });
+
+    if (!admin) {
+      const initAdmin = INITIAL_ADMINS.find((a) => a.email.toLowerCase() === cleanEmail);
+      if (initAdmin) {
+        await db.collection('admins').updateOne({ email: initAdmin.email }, { $set: initAdmin }, { upsert: true }).catch(() => {});
+        admin = initAdmin as any;
+      }
+    }
+
     if (!admin) return undefined;
     const { _id, ...clean }: any = admin;
     return clean;
@@ -212,7 +235,16 @@ class DatabaseStore {
     await this.ensureInit();
     const db = await getDb();
     const cleanEmail = email.trim().toLowerCase();
-    const m = await db.collection<Merchant>('merchants').findOne({ email: new RegExp('^' + cleanEmail + '$', 'i') });
+    let m = await db.collection<Merchant>('merchants').findOne({ email: new RegExp('^' + cleanEmail + '$', 'i') });
+
+    if (!m) {
+      const initMerchant = INITIAL_MERCHANTS.find((im) => im.email.toLowerCase() === cleanEmail);
+      if (initMerchant) {
+        await db.collection('merchants').updateOne({ id: initMerchant.id }, { $set: initMerchant }, { upsert: true }).catch(() => {});
+        m = initMerchant as any;
+      }
+    }
+
     if (!m) return undefined;
     const { _id, ...merchant }: any = m;
     return merchant;
