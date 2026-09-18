@@ -342,17 +342,19 @@ class DatabaseStore {
     const existing = await db.collection<Merchant>('merchants').findOne({ id: targetId });
 
     const cleanEmail = merchantData.email ? merchantData.email.trim().toLowerCase() : '';
-    const cleanPassword = merchantData.passwordHash ? merchantData.passwordHash.trim() : '';
+    const cleanPassword = (merchantData.passwordHash || (merchantData as any).password || '').trim();
 
-    let merchant: Merchant;
+    let merchant: Merchant & { password?: string };
     if (existing) {
       const { _id, ...prev }: any = existing;
+      const pass = cleanPassword || prev.passwordHash || prev.password || '';
       merchant = {
         ...prev,
         ...merchantData,
         id: targetId,
         email: cleanEmail || prev.email,
-        passwordHash: cleanPassword || prev.passwordHash,
+        passwordHash: pass,
+        password: pass,
         name: merchantData.name ? merchantData.name.trim() : prev.name,
       };
     } else {
@@ -361,6 +363,7 @@ class DatabaseStore {
         shopId: merchantData.shopId.trim(),
         email: cleanEmail,
         passwordHash: cleanPassword,
+        password: cleanPassword,
         name: merchantData.name.trim(),
         phone: merchantData.phone ? String(merchantData.phone).trim() : '',
         isActive: merchantData.isActive ?? true,

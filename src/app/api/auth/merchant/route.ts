@@ -17,8 +17,9 @@ export async function POST(req: NextRequest) {
 
     const merchant = await db.getMerchantByEmail(cleanEmail);
     const merchantFound = Boolean(merchant);
-    const passwordHashExists = Boolean(merchant?.passwordHash);
-    const isPasswordValid = merchant ? merchant.passwordHash.trim() === cleanPassword : false;
+    const storedPassword = merchant ? (merchant.passwordHash || (merchant as any).password || '').trim() : '';
+    const passwordHashExists = Boolean(storedPassword);
+    const isPasswordValid = merchant ? storedPassword === cleanPassword : false;
 
     console.log(
       `[Merchant Auth Debug] email: "${cleanEmail}", merchantFound: ${merchantFound}, merchantId: "${merchant?.id || 'NONE'}", passwordHashExists: ${passwordHashExists}, passwordVerificationResult: ${isPasswordValid}`
