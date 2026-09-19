@@ -23,6 +23,17 @@ import {
 } from './seed';
 import { calculateHaversineDistance } from './geofence';
 
+function cleanBsonData<T extends Record<string, any>>(obj: T): T {
+  if (!obj || typeof obj !== 'object') return obj;
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
+
 class DatabaseStore {
   private initPromise: Promise<void> | null = null;
 
@@ -224,7 +235,7 @@ class DatabaseStore {
     }
 
     const { _id, ...dataToSave }: any = shop;
-    await db.collection('shops').updateOne({ id: shop.id }, { $set: dataToSave }, { upsert: true });
+    await db.collection('shops').updateOne({ id: shop.id }, { $set: cleanBsonData(dataToSave) }, { upsert: true });
     return shop;
   }
 
@@ -279,7 +290,7 @@ class DatabaseStore {
       if (!m) {
         const initMerchant = INITIAL_MERCHANTS.find((im) => im.email.toLowerCase() === cleanEmail);
         if (initMerchant) {
-          await db.collection('merchants').updateOne({ id: initMerchant.id }, { $set: initMerchant }, { upsert: true }).catch(() => {});
+          await db.collection('merchants').updateOne({ id: initMerchant.id }, { $set: cleanBsonData(initMerchant) }, { upsert: true }).catch(() => {});
           m = initMerchant as any;
         }
       }
@@ -374,7 +385,7 @@ class DatabaseStore {
     }
 
     const { _id, ...dataToSave }: any = merchant;
-    await db.collection('merchants').updateOne({ id: merchant.id }, { $set: dataToSave }, { upsert: true });
+    await db.collection('merchants').updateOne({ id: merchant.id }, { $set: cleanBsonData(dataToSave) }, { upsert: true });
     return merchant;
   }
 
@@ -431,7 +442,7 @@ class DatabaseStore {
     }
 
     const { _id, ...dataToSave }: any = session;
-    await db.collection('merchantSessions').updateOne({ merchantId }, { $set: dataToSave }, { upsert: true });
+    await db.collection('merchantSessions').updateOne({ merchantId }, { $set: cleanBsonData(dataToSave) }, { upsert: true });
     return session;
   }
 
@@ -531,7 +542,7 @@ class DatabaseStore {
     const { _id, ...dataToSave }: any = offer;
     await db.collection('rewards').updateOne(
       { id: offer.id },
-      { $set: { ...dataToSave, shopId, merchantId: offerData.merchantId || `merchant-${shopId}`, updatedAt: now } },
+      { $set: cleanBsonData({ ...dataToSave, shopId, merchantId: offerData.merchantId || `merchant-${shopId}`, updatedAt: now }) },
       { upsert: true }
     );
     return offer;
@@ -567,7 +578,7 @@ class DatabaseStore {
       createdAt: new Date().toISOString(),
     };
 
-    await db.collection('customers').insertOne(customer);
+    await db.collection('customers').insertOne(cleanBsonData(customer));
     return customer;
   }
 
@@ -657,7 +668,7 @@ class DatabaseStore {
       createdAt: new Date().toISOString(),
     };
 
-    await db.collection('claims').insertOne(claim);
+    await db.collection('claims').insertOne(cleanBsonData(claim));
     return claim;
   }
 
@@ -908,7 +919,7 @@ class DatabaseStore {
       scannedAt: new Date().toISOString(),
       userAgent,
     };
-    await db.collection('scans').insertOne(scan);
+    await db.collection('scans').insertOne(cleanBsonData(scan));
     return scan;
   }
 

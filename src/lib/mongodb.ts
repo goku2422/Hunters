@@ -8,24 +8,34 @@ const options = {
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 5000,
   connectTimeoutMS: 10000,
+  tls: true,
 };
-
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-if (!global._mongoClientPromise) {
-  client = new MongoClient(uri, options);
-  global._mongoClientPromise = client.connect();
+export function getClientPromise(): Promise<MongoClient> {
+  if (!global._mongoClientPromise) {
+    const client = new MongoClient(uri, options);
+    global._mongoClientPromise = client.connect().catch((err) => {
+      console.error('MongoDB Atlas connection error:', err?.message || err);
+      global._mongoClientPromise = undefined;
+      throw err;
+    });
+  }
+  return global._mongoClientPromise;
 }
-clientPromise = global._mongoClientPromise;
 
+const clientPromise = getClientPromise();
 export default clientPromise;
 
 export async function getDb(): Promise<Db> {
-  const client = await clientPromise;
-  return client.db('flinty');
+  try {
+    const client = await getClientPromise();
+    return client.db('flinty');
+  } catch (error) {
+    global._mongoClientPromise = undefined;
+    throw error;
+  }
 }

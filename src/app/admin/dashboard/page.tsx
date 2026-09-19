@@ -25,6 +25,8 @@ import {
   Download,
   ExternalLink,
   Copy,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Shop, Merchant, Claim, Customer, Offer, ShopAnalytics } from '@/types';
 
@@ -38,6 +40,7 @@ export default function AdminDashboardPage() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMerchantPassword, setShowMerchantPassword] = useState(false);
 
   // Analytics & QR Modal State
   const [analyticsData, setAnalyticsData] = useState<ShopAnalytics[]>([]);
@@ -131,7 +134,19 @@ export default function AdminDashboardPage() {
   const fetchAdminData = useCallback(async (isManual = false) => {
     if (isManual) setIsRefreshing(true);
     const ts = Date.now();
-    const fetchOptions: RequestInit = { cache: 'no-store' };
+    const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
+    const authHeaders: Record<string, string> = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
+    const fetchOptions: RequestInit = { cache: 'no-store', headers: authHeaders, credentials: 'include' };
+
+    const parseJson = async (res: Response) => {
+      if (!res.ok) return null;
+      try {
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
+    };
+
     try {
       // Check auth
       const authRes = await fetch(`/api/auth/admin?_t=${ts}`, fetchOptions);
@@ -142,8 +157,8 @@ export default function AdminDashboardPage() {
 
       // Fetch stats
       const statsRes = await fetch(`/api/admin/stats?_t=${ts}`, fetchOptions);
-      const statsData = await statsRes.json();
-      if (statsData.success) {
+      const statsData = await parseJson(statsRes);
+      if (statsData && statsData.success) {
         setStats(statsData.stats);
         if (statsData.customers) {
           setCustomers(statsData.customers);
@@ -152,8 +167,8 @@ export default function AdminDashboardPage() {
 
       // Fetch shops from API & merge with localStorage
       const shopsRes = await fetch(`/api/admin/shops?_t=${ts}`, fetchOptions);
-      const shopsData = await shopsRes.json();
-      const apiShops = shopsData.success ? shopsData.shops : [];
+      const shopsData = await parseJson(shopsRes);
+      const apiShops = (shopsData && shopsData.success) ? shopsData.shops : [];
       const storedShops = getLocalShops();
 
       const shopMap = new Map<string, any>();
@@ -174,8 +189,8 @@ export default function AdminDashboardPage() {
 
       // Fetch merchants from API & merge with localStorage
       const merchantsRes = await fetch(`/api/admin/merchants?_t=${ts}`, fetchOptions);
-      const merchantsData = await merchantsRes.json();
-      const apiMerchants = merchantsData.success ? merchantsData.merchants : [];
+      const merchantsData = await parseJson(merchantsRes);
+      const apiMerchants = (merchantsData && merchantsData.success) ? merchantsData.merchants : [];
       const storedMerchants = getLocalMerchants();
 
       const merchantMap = new Map<string, any>();
@@ -190,8 +205,8 @@ export default function AdminDashboardPage() {
 
       // Fetch claims
       const claimsRes = await fetch(`/api/claims?_t=${ts}`, fetchOptions);
-      const claimsData = await claimsRes.json();
-      if (claimsData.success) {
+      const claimsData = await parseJson(claimsRes);
+      if (claimsData && claimsData.success) {
         setClaims(claimsData.claims);
       }
     } catch (err) {
@@ -207,7 +222,9 @@ export default function AdminDashboardPage() {
   // Fetch shop analytics
   const fetchAnalytics = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/qr', { method: 'POST' });
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
+      const headers: Record<string, string> = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
+      const res = await fetch('/api/admin/qr', { method: 'POST', headers, credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setAnalyticsData(data.analytics);
@@ -354,9 +371,15 @@ export default function AdminDashboardPage() {
       // 3. Send API sync request to backend silently
       const url = '/api/admin/shops';
       const method = isEditing ? 'PUT' : 'POST';
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {}),
+      };
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(targetShop),
       });
       const data = await res.json();
@@ -409,7 +432,9 @@ export default function AdminDashboardPage() {
         return updated;
       });
 
-      fetch(`/api/admin/shops?id=${shopId}`, { method: 'DELETE' }).catch(() => {});
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
+      const headers: Record<string, string> = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
+      fetch(`/api/admin/shops?id=${shopId}`, { method: 'DELETE', headers, credentials: 'include' }).catch(() => {});
     } catch (err) {
       console.error('Failed to delete shop:', err);
     }
@@ -455,13 +480,30 @@ export default function AdminDashboardPage() {
         shop: targetShop,
       };
 
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {}),
+      };
+
       const res = await fetch('/api/admin/merchants', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(newMerchant),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch (e) {}
+
+      if (res.status === 401) {
+        alert('Your admin session has expired or is invalid. Please log in again.');
+        router.push('/admin/login');
+        return;
+      }
+
       if (!res.ok || !data.success) {
         alert(`Failed to save merchant: ${data.message || 'Server error'}`);
         return;
@@ -492,9 +534,9 @@ export default function AdminDashboardPage() {
       });
 
       alert(`Merchant "${savedMerchant.name}" created successfully in MongoDB!`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving merchant:', err);
-      alert('Error saving merchant account.');
+      alert(`Error saving merchant account: ${err?.message || 'Network error'}`);
     }
   };
 
@@ -508,7 +550,9 @@ export default function AdminDashboardPage() {
         return updated;
       });
 
-      fetch(`/api/admin/merchants?id=${merchantId}`, { method: 'DELETE' }).catch(() => {});
+      const adminToken = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
+      const headers: Record<string, string> = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
+      fetch(`/api/admin/merchants?id=${merchantId}`, { method: 'DELETE', headers, credentials: 'include' }).catch(() => {});
     } catch (err) {
       console.error('Failed to delete merchant:', err);
     }
@@ -1407,13 +1451,23 @@ export default function AdminDashboardPage() {
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Password</label>
-                <input
-                  type="password"
-                  value={merchantForm.password}
-                  onChange={(e) => setMerchantForm({ ...merchantForm, password: e.target.value })}
-                  required
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-slate-900"
-                />
+                <div className="relative">
+                  <input
+                    type={showMerchantPassword ? 'text' : 'password'}
+                    value={merchantForm.password}
+                    onChange={(e) => setMerchantForm({ ...merchantForm, password: e.target.value })}
+                    required
+                    className="w-full p-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-slate-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMerchantPassword(!showMerchantPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                    title={showMerchantPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showMerchantPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {/* Gmail OAuth field */}
